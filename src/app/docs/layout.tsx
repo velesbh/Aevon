@@ -24,11 +24,11 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               <Link
                 key={page.slug}
                 href={href}
-                className={\`block px-3 py-2 rounded-md text-sm font-medium transition-colors \${
+                className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-brand-500/10 text-brand-600 dark:text-brand-400"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }\`}
+                }`}
               >
                 {page.title[language as "en" | "es"]}
               </Link>
