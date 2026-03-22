@@ -2,6 +2,12 @@ import { Metadata } from "next";
 import { docPages } from "@/data/docs";
 import DocSlugClient from "./doc-slug-client";
 
+export async function generateStaticParams() {
+  return docPages.map((page) => ({
+    slug: page.slug,
+  }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const page = docPages.find(p => p.slug === slug);
