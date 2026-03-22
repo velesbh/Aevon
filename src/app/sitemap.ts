@@ -2,6 +2,8 @@ import { MetadataRoute } from 'next';
 import { blogPosts } from '@/data/blog';
 import { docPages } from '@/data/docs';
 
+export const dynamic = "force-static";
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://aevon.ink';
 
