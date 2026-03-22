@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n';
-import { Github, Monitor, Smartphone, Globe, BookOpen, Map, Users, Database, ChevronRight, Lock, Cloud, Zap, ArrowRight } from 'lucide-react';
+import { Github, Monitor, Smartphone, Globe, BookOpen, Map, Users, Database, ChevronRight, Lock, Cloud, Zap, ArrowRight, Download } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 const TypewriterText = ({ text, className = "" }: { text: string, className?: string }) => {
