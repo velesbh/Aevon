@@ -1,0 +1,28 @@
+{
+  "name": "desktop",
+  "private": true,
+  "version": "0.1.0",
+  "author": "Enzonic LLC",
+  "publisher": "Enzonic LLC",
+  "type": "module",
+  "scripts": {
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.99.3",
+    "@tauri-apps/api": "^2.2.0",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
+    "@tauri-apps/plugin-fs": "^2.4.5",
+    "@tauri-apps/plugin-sql": "^2.3.2",
+    "better-sqlite3": "^12.8.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.2.0",
+    "concurrently": "^9.2.1",
+    "rimraf": "^5.0.0",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3",
+    "wait-on": "^9.0.4"
+  }
+}
