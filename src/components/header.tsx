@@ -23,9 +23,11 @@ export function Header() {
   }, [scrollY])
 
   const navItems = [
-    { name: t("header.product"), href: "#features" },
-    { name: t("header.solutions"), href: "#solutions" },
-    { name: t("header.pricing"), href: "#pricing" },
+    { name: t("header.product"), href: "/#features" },
+    { name: language === "es" ? "Blog" : "Blog", href: "/blog" },
+    { name: language === "es" ? "Documentación" : "Docs", href: "/docs" },
+    { name: "Downloads", href: "/#downloads" },
+    { name: "GitHub", href: "https://github.com/enzonic-llc/Aevon" },
   ]
 
   // Hide on auth pages or dashboard
