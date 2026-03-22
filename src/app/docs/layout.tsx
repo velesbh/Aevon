@@ -10,7 +10,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
   const { language, t } = useLanguage();
 
   return (
-    <div className="flex flex-1 w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-1 w-full max-w-7xl mx-auto pt-24 pb-8 md:pt-32 px-4 sm:px-6 lg:px-8">
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 pr-8 hidden md:block">
         <nav className="sticky top-24 space-y-1">
