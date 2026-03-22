@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n';
 import { Github, Monitor, Smartphone, Globe, BookOpen, Map, Users, Database, ArrowRight, Type } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 
 // --- Doodles ---
 const DoodleArrow = ({ className }: { className?: string }) => (
@@ -33,12 +33,12 @@ const DoodleStar = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } }
 };
 
-const stagger = {
+const stagger: Variants = {
   visible: { transition: { staggerChildren: 0.15 } }
 };
 
