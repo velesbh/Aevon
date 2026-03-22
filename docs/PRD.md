@@ -4,7 +4,7 @@
 **Name:** Aevon
 **Company:** Enzonic LLC (Kentucky)
 **Contact:** admin@enzonic.com
-**Vision:** To provide a premium, seamless, and intuitive writing and world-building platform for authors. Aevon brings a "$1B startup" feel to the creative writing process, offering a suite of intelligent, interconnected tools that handle the heavy lifting of continuity, planning, and organization, allowing authors to focus purely on their craft.
+**Vision:** To provide a premium, seamless, and intuitive writing and world-building platform for authors. 
 
 ## 2. Target Audience
 - Professional novelists and authors.
