@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/lib/i18n";
 import { FileSelectorModal } from "@/components/dashboard/file-selector-modal";
 import { useRouter } from "next/navigation";
-import { RichTextEditor, type MentionEntity } from "@/components/rich-text/rich-text-editor";
+import { RichTextEditor } from "@/components/rich-text/rich-text-editor";
+import type { MentionEntity } from "@/components/rich-text/mention-data";
 import { LoreDiagramEditor } from "@/components/dashboard/lore-diagram-editor";
 
 function formatRelativeTime(value: string) {
@@ -49,10 +50,10 @@ function LoreGridCard({
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:shadow-md hover:border-blue-500/30 transition-all duration-200 relative h-[280px]"
+      className="group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-200 relative h-[280px]"
     >
       <div className="h-32 bg-[var(--background-surface)] border-b border-[var(--border-ui)]/50 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         {signedUrl ? (
           <img src={signedUrl} alt={element.name} className="w-full h-full object-cover" />
         ) : (
@@ -62,11 +63,11 @@ function LoreGridCard({
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-2">
-          <span className="text-xs font-medium text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-md border border-blue-500/20">
+          <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
             {getAttributeText(element.attributes, "category") || "Uncategorized"}
           </span>
         </div>
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
           {element.name || "Untitled"}
         </h3>
         <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed flex-1">
@@ -136,8 +137,12 @@ export default function LorePage() {
         label: element.name || "Untitled",
         type: element.type as MentionEntity["type"],
         description: element.description ?? undefined,
+        imageUrl: undefined,
+        folderId: element.project_id,
+        folderName: element.project_id === selectedElement?.project_id ? t("lore.currentProject") : t("lore.otherProjects"),
+        folderCategory: element.project_id === selectedElement?.project_id ? "active" : "shared",
       }));
-  }, [worldElements]);
+  }, [worldElements, selectedElement?.project_id, t]);
 
   const [selectorOpen, setSelectorOpen] = useState(false);
   const [diagramImageUrl, setDiagramImageUrl] = useState<string | null>(null);
@@ -295,7 +300,7 @@ export default function LorePage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--background-surface)]">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
       </div>
     );
   }
@@ -305,7 +310,7 @@ export default function LorePage() {
       <header className="flex flex-col border-b border-[var(--border-ui)]/50 shrink-0 bg-[var(--background-surface)]/80 backdrop-blur-md z-10">
         <div className="flex items-center justify-between px-4 md:px-8 py-4">
           <div className="flex items-center gap-3">
-             <ScrollText className="w-5 h-5 text-blue-500" />
+             <ScrollText className="w-5 h-5 text-emerald-500" />
              <h1 className="text-xl font-bold tracking-tight text-[var(--text-primary)]">
                {t("lore.title")}
              </h1>
@@ -315,14 +320,14 @@ export default function LorePage() {
             <div className="hidden md:flex items-center bg-[var(--background-app)] p-1 rounded-full border border-[var(--border-ui)] shadow-sm">
               <button
                 onClick={() => setViewMode("split")}
-                className={cn("p-2 rounded-full transition-colors", viewMode === "split" ? "bg-[var(--background-surface)] text-blue-600 dark:text-blue-400 shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]")}
+                className={cn("p-2 rounded-full transition-colors", viewMode === "split" ? "bg-[var(--background-surface)] text-emerald-600 dark:text-emerald-400 shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]")}
                 title="Split View"
               >
                 <ListIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => { setViewMode("grid"); setSelectedElementId(null); }}
-                className={cn("p-2 rounded-full transition-colors", viewMode === "grid" ? "bg-[var(--background-surface)] text-blue-600 dark:text-blue-400 shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]")}
+                className={cn("p-2 rounded-full transition-colors", viewMode === "grid" ? "bg-[var(--background-surface)] text-emerald-600 dark:text-emerald-400 shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]")}
                 title="Grid View"
               >
                 <LayoutGrid className="w-4 h-4" />
@@ -343,14 +348,14 @@ export default function LorePage() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder={t("lore.searchPlaceholder")}
-                  className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-full py-3 pl-12 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
+                  className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-full py-3 pl-12 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-sm"
                 />
               </div>
               <button
                 type="button"
                 onClick={handleCreate}
                 disabled={creating}
-                className="flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 text-sm font-bold tracking-wide transition-all shadow-md hover:shadow-md ml-4 shrink-0"
+                className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 text-sm font-bold tracking-wide transition-all shadow-md hover:shadow-md ml-4 shrink-0"
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 <span className="hidden sm:inline">{t("lore.add")}</span>
@@ -393,14 +398,14 @@ export default function LorePage() {
                     value={searchQuery}
                     onChange={(event) => setSearchQuery(event.target.value)}
                     placeholder="Search lore..."
-                    className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-full py-2.5 pl-10 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-[var(--text-tertiary)]"
+                    className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-full py-2.5 pl-10 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-[var(--text-tertiary)]"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleCreate}
                   disabled={creating}
-                  className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md hover:shadow-md disabled:opacity-50 shrink-0"
+                  className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-md hover:shadow-md disabled:opacity-50 shrink-0"
                 >
                   {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
                 </button>
@@ -421,7 +426,7 @@ export default function LorePage() {
                         className={cn(
                           "w-full flex items-center gap-3 px-4 py-3 rounded-[16px] text-left transition-all border group",
                           isActive
-                            ? "bg-[var(--background-surface)] border-blue-500/30 shadow-sm text-blue-700 dark:text-blue-300"
+                            ? "bg-[var(--background-surface)] border-emerald-500/30 shadow-sm text-emerald-700 dark:text-emerald-300"
                             : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--background-surface)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-[var(--border-ui)] hover:text-[var(--text-primary)]"
                         )}
                       >
@@ -475,7 +480,7 @@ export default function LorePage() {
                         {entryDraft.name || "Untitled Entry"}
                       </h2>
                       {isDirty && (
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30 uppercase tracking-widest shrink-0 hidden sm:block">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 uppercase tracking-widest shrink-0 hidden sm:block">
                           Unsaved
                         </span>
                       )}
@@ -488,7 +493,7 @@ export default function LorePage() {
                             initial={{ opacity: 0, x: 10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: 10 }}
-                            className="text-[12px] font-medium text-blue-600 dark:text-blue-400 px-2 hidden sm:block"
+                            className="text-[12px] font-medium text-emerald-600 dark:text-emerald-400 px-2 hidden sm:block"
                           >
                             {status}
                           </motion.span>
@@ -508,7 +513,7 @@ export default function LorePage() {
                         type="button"
                         onClick={handleSave}
                         disabled={saving || !isDirty}
-                        className="flex items-center gap-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-bold tracking-wide transition-all shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)] disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm font-bold tracking-wide transition-all shadow-[0_4px_10px_rgba(59,130,246,0.2)] hover:shadow-[0_6px_15px_rgba(59,130,246,0.3)] disabled:opacity-40 disabled:shadow-none disabled:cursor-not-allowed"
                       >
                         {saving ? <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin" /> : <Save className="h-3.5 w-3.5 md:h-4 md:w-4" />}
                         Save
@@ -527,7 +532,7 @@ export default function LorePage() {
                       <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
                         <div className="space-y-6">
                           <label className="block group">
-                            <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-blue-500">
+                            <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-emerald-500">
                               {t("lore.field.title")}
                             </span>
                             <input
@@ -535,13 +540,13 @@ export default function LorePage() {
                               value={entryDraft.name}
                               onChange={(e) => handleFieldChange("name", e.target.value)}
                               placeholder="E.g., The Rules of Elemental Magic"
-                              className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-4 py-3 text-lg font-bold text-[var(--text-primary)] outline-none transition-all focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+                              className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-4 py-3 text-lg font-bold text-[var(--text-primary)] outline-none transition-all focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
                             />
                           </label>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label className="block group">
-                              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] transition-colors group-focus-within:text-blue-500">
+                              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] transition-colors group-focus-within:text-emerald-500">
                                 {t("lore.field.category")}
                               </span>
                               <input
@@ -549,7 +554,7 @@ export default function LorePage() {
                                 value={entryDraft.attributes?.category || ""}
                                 onChange={(e) => handleAttributeChange("category", e.target.value)}
                                 placeholder="Magic, History, Faction, Religion..."
-                                className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+                                className="w-full rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm text-[var(--text-primary)] outline-none transition-all focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 shadow-sm"
                               />
                             </label>
 
@@ -621,10 +626,10 @@ export default function LorePage() {
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-[var(--border-ui)]/50">
                             <label className="block group">
-                              <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-blue-500">
+                              <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-emerald-500">
                                 {t("lore.field.rules")}
                               </span>
-                              <div className="border border-[var(--border-ui)] rounded-xl overflow-hidden bg-[var(--background-app)] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-sm">
+                              <div className="border border-[var(--border-ui)] rounded-xl overflow-hidden bg-[var(--background-app)] focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all shadow-sm">
                                 <RichTextEditor
                                   value={entryDraft.attributes?.rules || ""}
                                   onChange={(value) => handleAttributeChange("rules", value)}
@@ -636,10 +641,10 @@ export default function LorePage() {
                             </label>
 
                             <label className="block group">
-                              <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-blue-500">
+                              <span className="mb-2 block text-sm font-medium text-[var(--text-secondary)] transition-colors group-focus-within:text-emerald-500">
                                 {t("lore.field.description")}
                               </span>
-                              <div className="border border-[var(--border-ui)] rounded-xl overflow-hidden bg-[var(--background-app)] focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-sm">
+                              <div className="border border-[var(--border-ui)] rounded-xl overflow-hidden bg-[var(--background-app)] focus-within:border-emerald-500/50 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all shadow-sm">
                                 <RichTextEditor
                                   value={entryDraft.description ?? ""}
                                   mentionItems={mentionEntities}
@@ -685,4 +690,3 @@ export default function LorePage() {
     </div>
   );
 }
-

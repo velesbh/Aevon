@@ -6,16 +6,17 @@ import { ThemeProvider, CssBaseline, createTheme, responsiveFontSizes } from '@m
 import type { ThemeOptions } from '@mui/material/styles';
 import { useTheme as useNextTheme } from 'next-themes';
 
-const brandGreen = '#10b981';
+const brandGreen = '#188038'; // Google Green
 
 function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
   const isDark = mode === 'dark';
 
   const basePalette = {
     primary: {
-      main: brandGreen,
-      dark: '#059669',
-      light: '#6ee7b7',
+      main: isDark ? '#34a853' : '#188038', // Google Green
+      dark: isDark ? '#188038' : '#115b27',
+      light: isDark ? '#53b76f' : '#34a853',
+      contrastText: '#ffffff',
     },
     secondary: {
       main: isDark ? '#d1fae5' : '#064e3b',
@@ -60,6 +61,27 @@ function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
           root: {
             borderRadius: 24,
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            borderRadius: 24,
+          },
+        },
+      },
+      MuiDialog: {
+        styleOverrides: {
+          paper: {
+            borderRadius: 28,
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            borderRadius: 12,
           },
         },
       },

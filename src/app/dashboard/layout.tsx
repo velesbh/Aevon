@@ -12,6 +12,7 @@ import { hasSupabaseEnv, supabase } from "@/lib/supabase";
 import { bootstrapWorkspaceForCurrentUser, signOutWorkspaceUser } from "@/lib/workspace";
 import { useLanguage } from "@/lib/i18n";
 import { RefreshCw } from "lucide-react";
+import { DashboardBottomNav } from "@/components/dashboard/bottom-nav";
 import {
   Box,
   Drawer,
@@ -25,7 +26,7 @@ import {
   Paper,
 } from "@mui/material";
 
-const drawerWidth = 240;
+const DEFAULT_DRAWER_WIDTH = 220;
 
 export default function DashboardLayout({
   children,
@@ -40,13 +41,41 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [drawerWidth, setDrawerWidth] = useState(DEFAULT_DRAWER_WIDTH);
+  const [isDraggingSidebar, setIsDraggingSidebar] = useState(false);
+  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDraggingSidebar) return;
+      const newWidth = Math.max(200, Math.min(e.clientX, 600));
+      setDrawerWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      setIsDraggingSidebar(false);
+    };
+    if (isDraggingSidebar) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingSidebar]);
+
+  const handleSidebarMouseDown = () => {
+    setIsDraggingSidebar(true);
+  };
 
   useEffect(() => {
     const { onSyncStateChange } = require('@/lib/sync-manager');
     const unsubscribe = onSyncStateChange((syncing: boolean) => {
       setIsSyncing(syncing);
     });
-    return () => unsubscribe();
+    return () => {
+      if (typeof unsubscribe === "function") unsubscribe();
+    };
   }, []);
 
   const handleDrawerClose = () => {
@@ -120,19 +149,30 @@ export default function DashboardLayout({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      // Don't forcefully log out if token refresh fails due to being offline
-      if ((event as string) === 'TOKEN_REFRESH_FAILED') {
+      // Ignore initial session and token refresh events to prevent reload flicker/jumps
+      if (
+        (event as string) === 'INITIAL_SESSION' || 
+        (event as string) === 'TOKEN_REFRESHED' || 
+        (event as string) === 'TOKEN_REFRESH_FAILED'
+      ) {
+        if (session?.user && !authReady) {
+          setAuthError(null);
+          setAuthReady(true);
+        }
         return;
       }
-      
-      if (!session?.user) {
+
+      // Only handle definitive sign-out or sign-in that isn't a refresh
+      if (event === 'SIGNED_OUT' || (!session?.user && event !== 'INITIAL_SESSION')) {
         setAuthReady(false);
         router.replace("/login");
         return;
       }
-
-      setAuthError(null);
-      setAuthReady(true);
+      
+      if (session?.user && !authReady) {
+        setAuthError(null);
+        setAuthReady(true);
+      }
     });
 
     return () => {
@@ -169,36 +209,7 @@ export default function DashboardLayout({
   return (
     <DashboardWorkspaceProvider>
       <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
-        <AppBar
-          position="fixed"
-          sx={{
-            display: { md: 'none' },
-            width: '100%',
-            bgcolor: 'background.paper',
-            color: 'text.primary',
-            boxShadow: 1,
-            zIndex: (theme) => theme.zIndex.drawer + 1,
-          }}
-        >
-          <Toolbar variant="dense">
-            <IconButton
-              color="inherit"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-            <Box sx={{ flexGrow: 1 }} />
-            {isSyncing && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <RefreshCw className="animate-spin" size={16} />
-                <Typography variant="caption">Syncing</Typography>
-              </Box>
-            )}
-          </Toolbar>
-        </AppBar>
+        {/* Mobile menu handled by Bottom Nav or FAB, removing redundant top AppBar */}
         <Box
           component="nav"
           sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
@@ -218,24 +229,49 @@ export default function DashboardLayout({
               '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
             }}
           >
-            <DashboardSidebar setMobileMenuOpen={setMobileOpen} mobileMenuOpen={mobileOpen} isMui={true} />
+            <DashboardSidebar setMobileMenuOpen={setMobileOpen} mobileMenuOpen={mobileOpen} isMui={true} onHideSidebar={() => setIsSidebarHidden(true)} />
           </Drawer>
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: 'none', md: 'block' },
-              '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-            }}
-            open
-          >
-            <DashboardSidebar setMobileMenuOpen={setMobileOpen} mobileMenuOpen={mobileOpen} isMui={true} />
-          </Drawer>
+          {!isSidebarHidden && (
+            <Drawer
+              variant="permanent"
+              sx={{
+                display: { xs: 'none', md: 'block' },
+                '& .MuiDrawer-paper': { 
+                  boxSizing: 'border-box', 
+                  width: drawerWidth, 
+                  transition: isDraggingSidebar ? 'none' : undefined,
+                  overflow: 'visible' 
+                },
+              }}
+              open
+            >
+              <DashboardSidebar setMobileMenuOpen={setMobileOpen} mobileMenuOpen={mobileOpen} isMui={true} onHideSidebar={() => setIsSidebarHidden(true)} />
+              
+              {/* Drag Handle */}
+              <Box
+                onMouseDown={handleSidebarMouseDown}
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '4px',
+                  height: '100%',
+                  cursor: 'col-resize',
+                  backgroundColor: isDraggingSidebar ? 'var(--color-primary)' : 'transparent',
+                  zIndex: 9999,
+                  '&:hover': {
+                    backgroundColor: 'var(--color-primary)',
+                  }
+                }}
+              />
+            </Drawer>
+          )}
         </Box>
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
+            width: { xs: '100%', md: isSidebarHidden ? '100%' : `calc(100% - ${drawerWidth}px)` },
             minWidth: 0,
             display: 'flex',
             flexDirection: 'column',
@@ -244,32 +280,44 @@ export default function DashboardLayout({
             position: 'relative',
           }}
         >
-          <Toolbar variant="dense" sx={{ flexShrink: 0, display: { xs: 'flex', md: 'none' } }} />
+          {/* Main Content Area - No redundant topbars */}
           {/* Desktop floating syncing indicator */}
+          {isSidebarHidden && (
+            <Box sx={{ position: 'absolute', top: 16, left: 16, zIndex: 50, display: { xs: 'none', md: 'block' } }}>
+              <IconButton 
+                size="small" 
+                onClick={() => setIsSidebarHidden(false)}
+                sx={{ bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}
+              >
+                <MenuIcon size={18} />
+              </IconButton>
+            </Box>
+          )}
           {isSyncing && (
             <Box
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 position: 'absolute',
-                top: 16,
+                bottom: 24,
                 right: 24,
                 zIndex: 50,
                 alignItems: 'center',
                 gap: 1,
                 bgcolor: 'background.paper',
-                px: 2,
-                py: 1,
-                borderRadius: 2,
-                boxShadow: 2,
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 4,
+                boxShadow: 3,
                 border: '1px solid',
                 borderColor: 'divider'
               }}
             >
-              <RefreshCw className="animate-spin text-emerald-500" size={16} />
-              <Typography variant="caption" sx={{ fontWeight: 500 }}>Syncing...</Typography>
+              <RefreshCw className="animate-spin text-emerald-500" size={14} />
             </Box>
           )}
           {children}
+          <Box sx={{ height: { xs: 80, md: 0 } }} />
+          <DashboardBottomNav />
         </Box>
       </Box>
     </DashboardWorkspaceProvider>

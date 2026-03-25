@@ -14,8 +14,15 @@ import {
   LayoutGrid,
   List as ListIcon,
   CheckSquare,
-  Square
+  Square,
+  Maximize2,
+  Grid3X3,
+  Search,
+  Plus
 } from "lucide-react";
+import { FilePreviewModal } from "@/components/dashboard/file-preview-modal";
+import { createCharacterImageSignedUrl } from "@/lib/workspace";
+import { cn } from "@/lib/utils";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
@@ -29,6 +36,10 @@ import Tooltip from "@mui/material/Tooltip";
 import LinearProgress from "@mui/material/LinearProgress";
 import Grid from "@mui/material/Grid";
 import { AnimatePresence, motion } from "framer-motion";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 import { useDashboardWorkspace } from "@/components/dashboard/workspace-provider";
 import { downloadWorkspaceFile, type FileRecord } from "@/lib/workspace";
 
@@ -83,6 +94,61 @@ function FileTypeIcon({ file, size = 48 }: { file: FileRecord; size?: number }) 
   return <FileIcon {...iconProps} color="var(--text-tertiary)" />;
 }
 
+function FileThumbnail({ file, size = "full" }: { file: FileRecord; size?: "sm" | "full" }) {
+  const [url, setUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    if (getFileCategory(file) !== "image") {
+      setLoading(false);
+      return;
+    }
+
+    createCharacterImageSignedUrl(file.file_path)
+      .then((signedUrl) => {
+        if (active) {
+          setUrl(signedUrl);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [file]);
+
+  if (loading) {
+    return (
+      <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "var(--background-app)" }}>
+        <Loader2 className="w-5 h-5 animate-spin text-[var(--text-tertiary)]" />
+      </Box>
+    );
+  }
+
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={file.file_name}
+        className={cn(
+          "w-full h-full object-cover transition-transform duration-700",
+          size === "full" && "group-hover:scale-110"
+        )}
+      />
+    );
+  }
+
+  return (
+    <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "var(--background-app)" }}>
+      <FileTypeIcon file={file} size={size === "sm" ? 24 : 48} />
+    </Box>
+  );
+}
+
 export default function FileManagerPage() {
   const { deleteFileRecord, error: workspaceError, files, loading, uploadFileRecord } = useDashboardWorkspace();
 
@@ -92,13 +158,29 @@ export default function FileManagerPage() {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "gallery">("gallery");
   const [isDragging, setIsDragging] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [previewFile, setPreviewFile] = useState<FileRecord | null>(null);
 
   // Bulk actions state
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: FileRecord } | null>(null);
+
+  const handleContextMenu = (event: React.MouseEvent, file: FileRecord) => {
+    event.preventDefault();
+    setContextMenu(
+      contextMenu === null
+        ? { x: event.clientX, y: event.clientY, file }
+        : null,
+    );
+  };
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null);
+  };
 
   const filteredFiles = useMemo(() => {
     if (!searchQuery.trim()) {
@@ -271,137 +353,7 @@ export default function FileManagerPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", width: "100%", bgcolor: "var(--background-surface)", overflow: "hidden" }}>
-      <Box
-        component="header"
-        sx={{
-          height: 80,
-          px: { xs: 3, md: 4 },
-          borderBottom: "1px solid",
-          borderColor: "var(--border-ui)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 3,
-          bgcolor: "color-mix(in srgb, var(--background-surface) 90%, transparent)",
-          backdropFilter: "blur(8px)",
-          position: "relative",
-          zIndex: 1,
-        }}
-      >
-        <Stack spacing={0.5}>
-          <Typography variant="h5" sx={{ color: "var(--text-primary)", fontWeight: 700 }}>
-            Files
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: "var(--text-secondary)", fontWeight: 500, display: { xs: "none", md: "block" } }}
-          >
-            Manage your workspace assets.
-          </Typography>
-        </Stack>
-
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <AnimatePresence>
-            {uploading && (
-              <Box
-                component={motion.div}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                sx={{
-                  display: { xs: "none", sm: "flex" },
-                  flexDirection: "column",
-                  gap: 1,
-                  minWidth: 220,
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={1.5}>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 1, color: "var(--emerald-500, #10B981)" }}>
-                    Uploading {uploadProgress}%
-                  </Typography>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={uploadProgress}
-                  sx={{
-                    height: 6,
-                    borderRadius: 999,
-                    bgcolor: "var(--background-app)",
-                    "& .MuiLinearProgress-bar": {
-                      bgcolor: "var(--emerald-500, #10B981)",
-                    },
-                  }}
-                />
-              </Box>
-            )}
-
-            {status && (
-              <Box
-                component={motion.span}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                sx={{ display: { xs: "none", sm: "block" } }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 1, color: "var(--emerald-500, #10B981)" }}>
-                  {status}
-                </Typography>
-              </Box>
-            )}
-
-            {(error || workspaceError) && (
-              <Box
-                component={motion.span}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                sx={{ display: { xs: "none", sm: "block" } }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 1, color: "#F87171" }}>
-                  {error ?? workspaceError}
-                </Typography>
-              </Box>
-            )}
-          </AnimatePresence>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,text/*"
-            multiple
-            hidden
-            onChange={(event) => {
-              if (event.target.files) {
-                void handleUploadBatch(event.target.files);
-              }
-            }}
-          />
-
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<UploadCloud className="h-4 w-4" />}
-            disabled={uploading}
-            onClick={() => fileInputRef.current?.click()}
-            sx={{
-              borderRadius: 999,
-              fontWeight: 700,
-              textTransform: "none",
-              px: { xs: 2.5, sm: 3.5 },
-              py: 1,
-              boxShadow: "0 8px 24px rgba(16,185,129,0.25)",
-            }}
-          >
-            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
-              Upload Files
-            </Box>
-            <Box component="span" sx={{ display: { xs: "inline", sm: "none" } }}>
-              Upload
-            </Box>
-          </Button>
-        </Stack>
-      </Box>
+      {/* Topbar removed for cleaner UI */}
 
       <AnimatePresence>
         {selectedFiles.size > 0 && (
@@ -517,54 +469,61 @@ export default function FileManagerPage() {
             gap: 2,
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flex: 1, width: "100%" }}>
-            <Tooltip title="Select all">
-              <IconButton
-                onClick={selectAll}
-                sx={{
-                  border: "1px solid",
-                  borderColor: "var(--border-ui)",
-                  bgcolor: "var(--background-app)",
-                  color:
-                    selectedFiles.size === filteredFiles.length && filteredFiles.length > 0
-                      ? "var(--emerald-500, #10B981)"
-                      : "var(--text-secondary)",
-                }}
-              >
-                {selectedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? (
-                  <CheckSquare className="w-5 h-5" />
-                ) : (
-                  <Square className="w-5 h-5" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full px-4 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-ui)]/50 bg-[var(--background-surface)]">
+                <ImageIcon className="w-4 h-4 text-emerald-500" />
+                <span className="text-sm font-bold text-[var(--text-primary)]">Files</span>
+              </div>
+              
+              <AnimatePresence>
+                {uploading && (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex items-center gap-3 text-xs font-bold text-emerald-500"
+                  >
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>UPLOADING {uploadProgress}%</span>
+                  </motion.div>
                 )}
-              </IconButton>
-            </Tooltip>
+              </AnimatePresence>
+            </div>
 
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search files..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              inputProps={{ style: { fontWeight: 500 } }}
-              sx={{
-                borderRadius: "999px",
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "999px",
-                  backgroundColor: "var(--background-app)",
-                  color: "var(--text-primary)",
-                  "& fieldset": {
-                    borderColor: "var(--border-ui)",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "rgba(16,185,129,0.5)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "rgba(16,185,129,0.9)",
-                  },
-                },
-              }}
-            />
-          </Stack>
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search files..."
+                  className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-full py-2 pl-12 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-emerald-500/50 transition-all"
+                />
+              </div>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,text/*"
+                multiple
+                hidden
+                onChange={(event) => {
+                  if (event.target.files) {
+                    void handleUploadBatch(event.target.files);
+                  }
+                }}
+              />
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg active:scale-95 shrink-0"
+              >
+                <Plus className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
           <Stack
             direction="row"
@@ -577,6 +536,18 @@ export default function FileManagerPage() {
               p: 0.5,
             }}
           >
+            <Tooltip title="Gallery view">
+              <IconButton
+                onClick={() => setViewMode("gallery")}
+                color={viewMode === "gallery" ? "success" : "default"}
+                sx={{
+                  bgcolor: viewMode === "gallery" ? "var(--background-surface)" : "transparent",
+                  borderRadius: "999px",
+                }}
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Grid view">
               <IconButton
                 onClick={() => setViewMode("grid")}
@@ -627,52 +598,194 @@ export default function FileManagerPage() {
           </Stack>
         ) : (
           <Box sx={{ flex: 1, overflowY: "auto", p: { xs: 3, md: 4 } }}>
-            {viewMode === "grid" ? (
-              <Grid container spacing={{ xs: 2, md: 3 }}>
+            {viewMode === "gallery" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {filteredFiles.map((file) => {
+                  const isSelected = selectedFiles.has(file.id);
+                  const isImage = getFileCategory(file) === "image";
+                  return (
+                    <div key={file.id}>
+                      <Paper
+                        className="group"
+                        elevation={0}
+                        sx={{
+                          position: "relative",
+                          borderRadius: 8,
+                          overflow: "hidden",
+                          aspectRatio: "1/1",
+                          cursor: "pointer",
+                          border: "1px solid",
+                          borderColor: isSelected ? "var(--emerald-500, #10B981)" : "var(--border-ui)/20",
+                          bgcolor: "var(--background-surface)",
+                          transition: "all 500ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+                          "&:hover": {
+                            borderColor: "var(--emerald-500, #10B981)",
+                            transform: "translateY(-6px)",
+                            boxShadow: "0 40px 80px -15px rgba(0,0,0,0.6)",
+                          },
+                          "&::after": {
+                            content: '""',
+                            position: "absolute",
+                            inset: 0,
+                            borderRadius: 'inherit',
+                            boxShadow: isSelected ? "inset 0 0 0 2px var(--emerald-500)" : "none",
+                            pointerEvents: "none",
+                            zIndex: 3
+                          }
+                        }}
+                        onClick={() => setPreviewFile(file)}
+                        onContextMenu={(e) => handleContextMenu(e, file)}
+                      >
+
+                        <FileThumbnail file={file} />
+                        
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 50%)",
+                            opacity: 0,
+                            transition: "opacity 300ms ease",
+                            ".group:hover &": { opacity: 1 },
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "flex-end",
+                            p: 2.5,
+                          }}
+                        >
+                           <Typography variant="body2" sx={{ color: "white", fontWeight: 700, mb: 0.5 }} noWrap>
+                             {file.file_name}
+                           </Typography>
+                           <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
+                             {formatBytes(file.file_size)}
+                           </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 12,
+                            left: 12,
+                            zIndex: 2,
+                            opacity: isSelected ? 1 : 0,
+                            transition: "opacity 200ms ease",
+                            ".group:hover &": { opacity: 1 },
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleSelection(file.id);
+                          }}
+                        >
+                          <IconButton 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: isSelected ? "var(--emerald-500, #10B981)" : "rgba(0,0,0,0.4)",
+                              color: "white",
+                              backdropFilter: "blur(4px)",
+                              "&:hover": { bgcolor: isSelected ? "var(--emerald-600)" : "rgba(0,0,0,0.6)" }
+                            }}
+                          >
+                            {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
+                          </IconButton>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 12,
+                            right: 12,
+                            zIndex: 2,
+                            opacity: 0,
+                            transition: "opacity 200ms ease",
+                            ".group:hover &": { opacity: 1 },
+                          }}
+                        >
+                          <IconButton 
+                            size="small" 
+                            sx={{ 
+                              bgcolor: "rgba(0,0,0,0.4)",
+                              color: "white",
+                              backdropFilter: "blur(4px)",
+                              "&:hover": { bgcolor: "rgba(0,0,0,0.6)" }
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPreviewFile(file);
+                            }}
+                          >
+                            <Maximize2 className="w-4 h-4" />
+                          </IconButton>
+                        </Box>
+                      </Paper>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : viewMode === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {filteredFiles.map((file) => {
                   const isSelected = selectedFiles.has(file.id);
                   return (
-                    <Grid key={file.id} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
+                    <div key={file.id}>
                       <Paper
                         onClick={() => toggleSelection(file.id)}
-                        elevation={isSelected ? 8 : 1}
+                        onContextMenu={(e) => handleContextMenu(e, file)}
+                        className="group"
+                        elevation={0}
                         sx={{
                           position: "relative",
                           borderRadius: 4,
-                          p: { xs: 2.5, md: 3 },
+                          p: 0,
                           height: "100%",
                           cursor: "pointer",
                           display: "flex",
                           flexDirection: "column",
-                          gap: 2,
                           border: "1px solid",
-                          borderColor: isSelected ? "rgba(16,185,129,0.6)" : "var(--border-ui)",
+                          borderColor: isSelected ? "var(--emerald-500, #10B981)" : "var(--border-ui)",
                           bgcolor: isSelected ? "rgba(16,185,129,0.06)" : "var(--background-app)",
                           transition: "all 150ms ease",
+                          overflow: "hidden",
                           "&:hover": {
-                            borderColor: "rgba(16,185,129,0.4)",
-                            boxShadow: "0 15px 35px rgba(0,0,0,0.25)",
-                          },
-                          "&:hover .file-card-actions": {
-                            opacity: 1,
+                            borderColor: "var(--emerald-500, #10B981)",
+                            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
                           },
                         }}
                       >
-                        <Box sx={{ position: "absolute", top: 12, left: 12, color: isSelected ? "var(--emerald-500, #10B981)" : "var(--text-tertiary)" }}>
+                        <Box sx={{ position: "absolute", top: 12, left: 12, zIndex: 10, color: isSelected ? "var(--emerald-500, #10B981)" : "var(--text-tertiary)" }}>
                           {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                         </Box>
 
-                        <Stack alignItems="center" justifyContent="center" sx={{ flex: 1, py: { xs: 2, md: 3 } }}>
-                          <FileTypeIcon file={file} size={56} />
-                        </Stack>
+                        <Box sx={{ aspectRatio: "1/1", width: "100%", overflow: "hidden", position: "relative" }}>
+                          <FileThumbnail file={file} />
+                          <Box
+                             className="file-card-preview-btn"
+                             sx={{
+                               position: "absolute",
+                               inset: 0,
+                               display: "flex",
+                               alignItems: "center",
+                               justifyContent: "center",
+                               bgcolor: "rgba(16,185,129,0.1)",
+                               opacity: 0,
+                               transition: "opacity 150ms ease",
+                               ".group:hover &": { opacity: 1 },
+                             }}
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               setPreviewFile(file);
+                             }}
+                          >
+                             <IconButton size="small" sx={{ bgcolor: "var(--background-surface)", color: "var(--text-primary)" }}>
+                               <Maximize2 className="w-4 h-4" />
+                             </IconButton>
+                          </Box>
+                        </Box>
 
-                        <Divider sx={{ borderColor: "var(--border-ui)" }} />
-
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 700, color: "var(--text-primary)" }}>
+                        <Box sx={{ p: 2, borderTop: "1px solid var(--border-ui)" }}>
+                          <Typography variant="caption" noWrap sx={{ fontWeight: 700, color: "var(--text-primary)", display: "block" }}>
                             {file.file_name}
                           </Typography>
-                          <Typography variant="caption" sx={{ color: "var(--text-tertiary)" }}>
+                          <Typography variant="caption" sx={{ color: "var(--text-tertiary)", fontSize: 10 }}>
                             {formatBytes(file.file_size)}
                           </Typography>
                         </Box>
@@ -687,25 +800,26 @@ export default function FileManagerPage() {
                             gap: 0.5,
                             opacity: isSelected ? 1 : 0,
                             transition: "opacity 150ms ease",
+                            zIndex: 10,
                           }}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <Tooltip title="Download">
-                            <IconButton size="small" onClick={() => void handleDownload(file)} sx={{ bgcolor: "var(--background-surface)" }}>
-                              <Download className="w-4 h-4" />
+                            <IconButton size="small" onClick={() => void handleDownload(file)} sx={{ bgcolor: "var(--background-surface)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                              <Download className="w-3.5 h-3.5" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Delete">
-                            <IconButton size="small" onClick={() => void handleDelete(file)} disabled={deletingId === file.id} color="error">
-                              {deletingId === file.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            <IconButton size="small" onClick={() => void handleDelete(file)} disabled={deletingId === file.id} color="error" sx={{ bgcolor: "var(--background-surface)", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}>
+                              {deletingId === file.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                             </IconButton>
                           </Tooltip>
                         </Box>
                       </Paper>
-                    </Grid>
+                    </div>
                   );
                 })}
-              </Grid>
+              </div>
             ) : (
               <Paper
                 sx={{
@@ -721,6 +835,7 @@ export default function FileManagerPage() {
                     <Box
                       key={file.id}
                       onClick={() => toggleSelection(file.id)}
+                      onContextMenu={(e) => handleContextMenu(e, file)}
                       sx={{
                         display: "flex",
                         alignItems: "center",
@@ -748,8 +863,8 @@ export default function FileManagerPage() {
                         >
                           {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                         </IconButton>
-                        <Paper sx={{ p: 1.5, borderRadius: 2, border: "1px solid var(--border-ui)", bgcolor: "var(--background-surface)" }}>
-                          <FileTypeIcon file={file} size={28} />
+                        <Paper sx={{ width: 48, height: 48, borderRadius: 2, border: "1px solid var(--border-ui)", bgcolor: "var(--background-surface)", overflow: "hidden", flexShrink: 0 }}>
+                          <FileThumbnail file={file} size="sm" />
                         </Paper>
                         <Box sx={{ minWidth: 0 }}>
                           <Typography variant="subtitle1" noWrap sx={{ fontWeight: 700, color: "var(--text-primary)" }}>
@@ -759,7 +874,7 @@ export default function FileManagerPage() {
                             <Chip
                               label={formatBytes(file.file_size)}
                               size="small"
-                              sx={{ borderColor: "var(--border-ui)", color: "var(--text-secondary)", bgcolor: "var(--background-app)" }}
+                              sx={{ borderColor: "var(--border-ui)", color: "var(--text-secondary)", bgcolor: "var(--background-app)", height: 20, fontSize: 10, fontWeight: 700 }}
                               variant="outlined"
                             />
                             <Typography variant="caption" sx={{ color: "var(--text-tertiary)", display: { xs: "none", sm: "block" } }}>
@@ -775,6 +890,11 @@ export default function FileManagerPage() {
                         onClick={(event) => event.stopPropagation()}
                         sx={{ opacity: { xs: 1, md: 0.8 }, "&:hover": { opacity: 1 } }}
                       >
+                        <Tooltip title="Preview">
+                           <IconButton size="small" onClick={() => setPreviewFile(file)}>
+                             <Maximize2 className="w-4 h-4" />
+                           </IconButton>
+                        </Tooltip>
                         <Tooltip title="Download">
                           <IconButton size="small" onClick={() => void handleDownload(file)}>
                             <Download className="w-4 h-4" />
@@ -794,6 +914,85 @@ export default function FileManagerPage() {
           </Box>
         )}
       </Box>
+
+      <FilePreviewModal
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
+        onDelete={handleDelete}
+        onDownload={handleDownload}
+      />
+
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.y, left: contextMenu.x }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => {
+            if (contextMenu?.file) {
+              setPreviewFile(contextMenu.file);
+            }
+            handleCloseContextMenu();
+          }}
+        >
+          <ListItemIcon>
+            <Maximize2 className="w-4 h-4" />
+          </ListItemIcon>
+          <ListItemText>Preview</ListItemText>
+        </MenuItem>
+        
+        <MenuItem
+          onClick={() => {
+            if (contextMenu?.file) {
+              void handleDownload(contextMenu.file);
+            }
+            handleCloseContextMenu();
+          }}
+        >
+          <ListItemIcon>
+            <Download className="w-4 h-4" />
+          </ListItemIcon>
+          <ListItemText>Download</ListItemText>
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (contextMenu?.file) {
+              toggleSelection(contextMenu.file.id);
+            }
+            handleCloseContextMenu();
+          }}
+        >
+          <ListItemIcon>
+            <CheckSquare className="w-4 h-4" />
+          </ListItemIcon>
+          <ListItemText>
+            {contextMenu?.file && selectedFiles.has(contextMenu.file.id) ? "Deselect" : "Select"}
+          </ListItemText>
+        </MenuItem>
+        
+        <Divider />
+        
+        <MenuItem
+          onClick={() => {
+            if (contextMenu?.file) {
+              void handleDelete(contextMenu.file);
+            }
+            handleCloseContextMenu();
+          }}
+          sx={{ color: "error.main" }}
+        >
+          <ListItemIcon sx={{ color: "inherit" }}>
+            <Trash2 className="w-4 h-4" />
+          </ListItemIcon>
+          <ListItemText>Delete</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

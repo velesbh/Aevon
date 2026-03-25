@@ -22,7 +22,8 @@ import { useDashboardWorkspace } from "@/components/dashboard/workspace-provider
 import { cn } from "@/lib/utils";
 import { getAttributeText, createCharacterImageSignedUrl } from "@/lib/workspace";
 import { FileSelectorModal } from "@/components/dashboard/file-selector-modal";
-import { RichTextEditor, type MentionEntity } from "@/components/rich-text/rich-text-editor";
+import { RichTextEditor } from "@/components/rich-text/rich-text-editor";
+import type { MentionEntity } from "@/components/rich-text/mention-data";
 import { InteractiveMap, type MapWaypoint } from "@/components/dashboard/maps/interactive-map";
 import { useRouter } from "next/navigation";
 
@@ -110,6 +111,11 @@ export default function MapsPage() {
     attributes: Record<string, string>;
   } | null>(null);
 
+  const selectedElement = useMemo(
+    () => mapElements.find((el) => el.id === selectedId) || null,
+    [mapElements, selectedId],
+  );
+
   const mentionEntities: MentionEntity[] = useMemo(() => {
     return worldElements
       .filter((el) => ["character", "location", "item", "lore"].includes(el.type))
@@ -118,17 +124,16 @@ export default function MapsPage() {
         label: element.name || "Untitled",
         type: element.type as MentionEntity["type"],
         description: element.description ?? undefined,
+        imageUrl: undefined,
+        folderId: element.project_id,
+        folderName: element.project_id === selectedElement?.project_id ? t("maps.currentProject") : t("maps.otherProjects"),
+        folderCategory: element.project_id === selectedElement?.project_id ? "active" : "shared",
       }));
-  }, [worldElements]);
+  }, [worldElements, selectedElement?.project_id, t]);
 
   const serializedWaypoints = entryDraft?.attributes?.waypoints ?? "";
   const waypoints = useMemo(() => getWaypoints(serializedWaypoints), [serializedWaypoints]);
   const [selectedWaypointId, setSelectedWaypointId] = useState<string | null>(null);
-
-  const selectedElement = useMemo(
-    () => mapElements.find((el) => el.id === selectedId) || null,
-    [mapElements, selectedId],
-  );
 
   // Filtered maps based on search
   const filteredMaps = useMemo(() => {

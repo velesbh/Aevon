@@ -1,27 +1,32 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, Plus, Search, User as UserIcon } from "lucide-react";
+import { Plus, User as UserIcon, Loader2, Trash2, Search, Image as ImageIcon } from "lucide-react";
 import Image from "next/image";
 import {
   Box,
   Button,
-  Card,
-  CardActionArea,
   CircularProgress,
-  InputAdornment,
-  List,
-  ListItem,
+  MenuItem,
+  Select,
   Stack,
-  TextField,
   Typography,
   useTheme,
+  FormControl,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { CharacterDetailsEditor } from "@/components/dashboard/character-details-editor";
-import { getCharacterAttributes, getCharacterImagePath, createCharacterImageSignedUrl } from "@/lib/workspace";
+import { 
+  getCharacterAttributes, 
+  getCharacterImagePath, 
+  createCharacterImageSignedUrl,
+  type WorldElementRecord 
+} from "@/lib/workspace";
 import { useDashboardWorkspace } from "./workspace-provider";
 import { useTranslation } from "@/lib/i18n";
+import { useSearchParams, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 function CharacterPortrait({ imagePath, name }: { imagePath: string; name: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -29,20 +34,25 @@ function CharacterPortrait({ imagePath, name }: { imagePath: string; name: strin
 
   useEffect(() => {
     let active = true;
-    if (!imagePath) {
-      setUrl(null);
-      return () => {
-        active = false;
-      };
-    }
+    (async () => {
+      if (!imagePath) {
+        if (active) {
+          setUrl(null);
+        }
+        return;
+      }
 
-    createCharacterImageSignedUrl(imagePath)
-      .then((signedUrl) => {
-        if (active) setUrl(signedUrl);
-      })
-      .catch(() => {
-        if (active) setUrl(null);
-      });
+      try {
+        const signed = await createCharacterImageSignedUrl(imagePath);
+        if (active) {
+          setUrl(signed);
+        }
+      } catch {
+        if (active) {
+          setUrl(null);
+        }
+      }
+    })();
 
     return () => {
       active = false;
@@ -76,7 +86,6 @@ function CharacterPortrait({ imagePath, name }: { imagePath: string; name: strin
 
 export function CharacterWorkspacePanel({ className }: { className?: string }) {
   const {
-    activeProjectTitle,
     characters,
     createWorldElementRecord,
     deleteWorldElementRecord,
@@ -89,59 +98,38 @@ export function CharacterWorkspacePanel({ className }: { className?: string }) {
     uploadCharacterImageRecord,
   } = useDashboardWorkspace();
   const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const urlId = searchParams.get("id");
+  const router = useRouter();
+
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const theme = useTheme();
 
-  const filteredCharacters = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-
-    if (!query) {
-      return characters;
-    }
-
-    return characters.filter((character) => {
-      const attributes = getCharacterAttributes(character.attributes);
-      const haystack = [
-        character.name,
-        attributes.role,
-        attributes.summary,
-        attributes.appearance,
-        attributes.personality,
-        attributes.motivation,
-        attributes.conflict,
-        attributes.arc,
-        attributes.notes,
-        attributes.status,
-        character.description ?? "",
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(query);
-    });
-  }, [characters, searchQuery]);
-
+  // Sync with URL
   useEffect(() => {
-    if (filteredCharacters.length === 0) {
-      return;
+    if (urlId && urlId !== selectedCharacterId) {
+      setSelectedCharacterId(urlId);
     }
+  }, [urlId, selectedCharacterId, setSelectedCharacterId]);
 
-    if (!selectedCharacterId || !filteredCharacters.some((character) => character.id === selectedCharacterId)) {
-      setSelectedCharacterId(filteredCharacters[0].id);
-    }
-  }, [filteredCharacters, selectedCharacterId, setSelectedCharacterId]);
+  const selectedCharacter = useMemo(
+    () => characters.find((character) => character.id === (urlId || selectedCharacterId)) || null,
+    [characters, urlId, selectedCharacterId]
+  );
 
-  const selectedCharacter =
-    filteredCharacters.length === 0
-      ? searchQuery.trim()
-        ? null
-        : characters.find((character) => character.id === selectedCharacterId) ?? null
-      : filteredCharacters.find((character) => character.id === selectedCharacterId) ?? filteredCharacters[0] ?? null;
+  const filteredCharacters = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) return characters;
+    return characters.filter(c => 
+      c.name.toLowerCase().includes(query) || 
+      (c.description ?? "").toLowerCase().includes(query)
+    );
+  }, [characters, searchQuery]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -151,6 +139,9 @@ export function CharacterWorkspacePanel({ className }: { className?: string }) {
     try {
       const created = await createWorldElementRecord("character");
       setSelectedCharacterId(created.id);
+      const params = new URLSearchParams(window.location.search);
+      params.set("id", created.id);
+      router.push(`${window.location.pathname}?${params.toString()}`);
       setStatus(t("char.created"));
       setTimeout(() => setStatus(null), 3000);
     } catch (createError) {
@@ -187,6 +178,8 @@ export function CharacterWorkspacePanel({ className }: { className?: string }) {
     try {
       await deleteWorldElementRecord(id);
       setStatus(t("char.deleted"));
+      setSelectedCharacterId(null);
+      router.push("/dashboard/characters");
       setTimeout(() => setStatus(null), 3000);
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : t("char.deleteError"));
@@ -197,226 +190,150 @@ export function CharacterWorkspacePanel({ className }: { className?: string }) {
 
   if (loading) {
     return (
-      <Box
-        className={className}
-        sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", bgcolor: "background.default" }}
-      >
-        <CircularProgress color="success" />
-      </Box>
+      <div className="flex h-full items-center justify-center bg-[var(--background-surface)]">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+      </div>
     );
   }
 
   return (
-    <Box
-      className={className}
-      sx={{ display: "flex", flex: 1, minHeight: 0, width: "100%", bgcolor: "background.default", position: "relative" }}
-    >
-      <Box
-        component="aside"
-        sx={{
-          width: { xs: "100%", md: 360, lg: 420 },
-          flexShrink: 0,
-          borderRight: { xs: "none", md: "1px solid" },
-          borderColor: "divider",
-          display: { xs: selectedCharacterId ? "none" : "flex", md: "flex" },
-          flexDirection: "column",
-          bgcolor: "background.paper",
-          boxShadow: { xs: "none", md: "4px 0 32px rgba(0,0,0,0.14)" },
-          zIndex: 2,
-          minHeight: 0,
-        }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          sx={{
-            px: 4,
-            py: 3,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            bgcolor: alpha(theme.palette.background.paper, 0.9),
-            backdropFilter: "blur(12px)",
-          }}
-        >
-          <Box>
-            <Typography variant="h6" fontWeight={800} color="text.primary">
-              {t("char.title")}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {activeProjectTitle ?? t("ms.noProject")}
-            </Typography>
-          </Box>
-          <Button
-            variant="contained"
-            color="success"
-            size="small"
-            onClick={() => void handleCreate()}
-            disabled={creating}
-            startIcon={creating ? <CircularProgress size={14} color="inherit" /> : <Plus size={16} />}
-            sx={{ borderRadius: 999, fontWeight: 700, boxShadow: "0 12px 24px rgba(16,185,129,0.25)" }}
-          >
-            {creating ? t("char.creating") : t("char.new")}
-          </Button>
-        </Stack>
+    <div className={cn("flex flex-col h-full bg-[var(--background-app)] overflow-hidden", className)}>
 
-        <Box sx={{ px: 4, py: 3, borderBottom: "1px solid", borderColor: "divider" }}>
-          <TextField
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder={t("char.searchPlaceholder")}
-            fullWidth
-            size="small"
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={16} />
-                </InputAdornment>
-              ),
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 999,
-                bgcolor: "background.default",
-                fontWeight: 500,
-                "& fieldset": { borderColor: alpha(theme.palette.divider, 0.7) },
-                "&:hover fieldset": { borderColor: theme.palette.success.light },
-                "&.Mui-focused fieldset": {
-                  borderColor: theme.palette.success.main,
-                  boxShadow: `0 0 0 2px ${alpha(theme.palette.success.main, 0.15)}`,
-                },
-              },
-            }}
-          />
-        </Box>
 
-        <Box sx={{ flex: 1, overflowY: "auto", p: 3 }} className="custom-scrollbar">
-          {filteredCharacters.length > 0 ? (
-            <List
-              disablePadding
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                gap: 2,
-                listStyle: "none",
-              }}
+      <main className="flex-1 overflow-hidden flex flex-col relative">
+        <AnimatePresence mode="wait">
+          {!selectedCharacter ? (
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar"
             >
-              {filteredCharacters.map((character) => {
-                const attributes = getCharacterAttributes(character.attributes);
-                const isActive = selectedCharacter?.id === character.id;
-                const imagePath = getCharacterImagePath(character.attributes);
+              <div className="max-w-6xl mx-auto space-y-8">
+                {/* Topbar removed for cleaner UI */}
 
-                return (
-                  <ListItem key={character.id} disablePadding sx={{ display: "block" }}>
-                    <Card
-                      elevation={0}
-                      sx={{
-                        borderRadius: 4,
-                        border: "2px solid",
-                        borderColor: isActive ? "success.main" : alpha(theme.palette.divider, 0.8),
-                        bgcolor: alpha(theme.palette.background.paper, 0.95),
-                        transition: "all 0.3s ease",
-                        boxShadow: isActive
-                          ? "0 18px 40px rgba(16,185,129,0.3)"
-                          : "0 10px 28px rgba(15,23,42,0.12)",
-                        transform: isActive ? "translateY(-4px)" : "none",
-                        overflow: "hidden",
-                      }}
+                {filteredCharacters.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 px-4 text-center border-2 border-dashed border-[var(--border-ui)]/50 rounded-3xl bg-[var(--background-surface)]/30">
+                    <div className="w-16 h-16 rounded-3xl bg-[var(--background-app)] flex items-center justify-center mb-4 border border-[var(--border-ui)]/50 shadow-sm">
+                      <UserIcon className="w-8 h-8 text-[var(--text-tertiary)]" />
+                    </div>
+                    <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">
+                      {searchQuery ? "No matching characters found" : "No characters yet"}
+                    </h3>
+                    <p className="text-[var(--text-secondary)] text-sm mb-6 max-w-xs mx-auto">
+                      {searchQuery ? "Try a different search term or clear the filter." : "Start by creating your first character."}
+                    </p>
+                    <button
+                      onClick={handleCreate}
+                      disabled={creating}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text-primary)] text-[var(--background-app)] text-sm font-bold hover:scale-105 active:scale-95 transition-all shadow-lg"
                     >
-                      <CardActionArea
+                      {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      <span>Add New Character</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+                    {filteredCharacters.map((character) => (
+                      <CharacterCard
+                        key={character.id}
+                        character={character}
                         onClick={() => {
-                          setSelectedCharacterId(character.id);
-                          setStatus(null);
-                          setError(null);
+                          const params = new URLSearchParams(window.location.search);
+                          params.set("id", character.id);
+                          router.push(`${window.location.pathname}?${params.toString()}`);
                         }}
-                        sx={{ position: "relative" }}
-                      >
-                        <Box sx={{ position: "relative", width: "100%", pt: "133%" }}>
-                          <CharacterPortrait imagePath={imagePath} name={character.name} />
-                          <Box
-                            sx={{
-                              position: "absolute",
-                              inset: 0,
-                              background: "linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%)",
-                              opacity: 0.9,
-                            }}
-                          />
-                          <Stack sx={{ position: "absolute", inset: 0, p: 2, justifyContent: "flex-end" }} spacing={0.5}>
-                            <Typography variant="caption" sx={{ color: "success.light", fontWeight: 700, textTransform: "uppercase" }}>
-                              {attributes.role || t("char.unassigned")}
-                            </Typography>
-                            <Typography variant="subtitle2" sx={{ color: "common.white", fontWeight: 800 }} noWrap>
-                              {character.name || t("char.untitled")}
-                            </Typography>
-                          </Stack>
-                        </Box>
-                      </CardActionArea>
-                    </Card>
-                  </ListItem>
-                );
-              })}
-            </List>
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
           ) : (
-            <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ py: 10, color: "text.secondary", textAlign: "center" }}>
-              <UserIcon size={32} />
-              <Typography variant="body2" fontWeight={500}>
-                {searchQuery ? t("char.noMatch") : t("char.noChar")}
-              </Typography>
-            </Stack>
-          )}
-        </Box>
-      </Box>
-
-      <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", position: "relative" }}>
-        {selectedCharacter && (
-          <Box sx={{ position: "absolute", inset: 0, opacity: 0.07, pointerEvents: "none" }}>
-            <CharacterPortrait imagePath={getCharacterImagePath(selectedCharacter.attributes)} name={selectedCharacter.name} />
-            <Box sx={{ position: "absolute", inset: 0, bgcolor: alpha(theme.palette.background.default, 0.8), backdropFilter: "blur(30px)" }} />
-          </Box>
-        )}
-
-        <Box sx={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-          <Box
-            sx={{
-              display: { xs: "flex", md: "none" },
-              alignItems: "center",
-              justifyContent: "space-between",
-              px: 2,
-              py: 1.5,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              bgcolor: alpha(theme.palette.background.paper, 0.9),
-              backdropFilter: "blur(14px)",
-            }}
-          >
-            <Button
-              size="small"
-              startIcon={<ChevronLeft size={16} />}
-              onClick={() => setSelectedCharacterId(null)}
-              sx={{ fontWeight: 600, letterSpacing: 1, textTransform: "uppercase" }}
+            <motion.div
+              key="editor"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="flex-1 flex flex-col min-h-0"
             >
-              {t("char.mobileRoster")}
-            </Button>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              {t("char.entries").replace("{count}", filteredCharacters.length.toString())}
-            </Typography>
-          </Box>
+              <CharacterDetailsEditor
+                key={selectedCharacter.id}
+                character={selectedCharacter}
+                layout="page"
+                saving={saving}
+                deleting={deleting}
+                status={status}
+                error={error ?? workspaceError}
+                onSave={handleSave}
+                onDelete={handleDelete}
+                onUploadImage={uploadCharacterImageRecord}
+                onRemoveImage={removeCharacterImageRecord}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
+    </div>
+  );
+}
 
-          <CharacterDetailsEditor
-            key={selectedCharacter ? `${selectedCharacter.id}-${selectedCharacter.updated_at}` : "empty-character"}
-            character={selectedCharacter}
-            layout="page"
-            saving={saving}
-            deleting={deleting}
-            status={status}
-            error={error ?? workspaceError}
-            onSave={handleSave}
-            onDelete={handleDelete}
-            onUploadImage={uploadCharacterImageRecord}
-            onRemoveImage={removeCharacterImageRecord}
-          />
-        </Box>
-      </Box>
-    </Box>
+function CharacterCard({ character, onClick }: { character: WorldElementRecord; onClick: () => void }) {
+  const imagePath = getCharacterImagePath(character.attributes);
+  const [url, setUrl] = useState<string | null>(null);
+  const attributes = getCharacterAttributes(character.attributes);
+
+  useEffect(() => {
+    let active = true;
+    if (!imagePath) return;
+    createCharacterImageSignedUrl(imagePath).then(signedUrl => {
+      if (active) setUrl(signedUrl);
+    });
+    return () => { active = false; };
+  }, [imagePath]);
+
+  return (
+    <div
+      onClick={onClick}
+      className="group cursor-pointer flex flex-col rounded-[24px] border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:border-emerald-500/50 transition-all duration-300 relative aspect-[4/5]"
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10" />
+      
+      {url ? (
+        <img
+          src={url}
+          alt={character.name}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-[var(--background-surface)]">
+          <UserIcon className="w-12 h-12 text-[var(--text-tertiary)] opacity-20" />
+        </div>
+      )}
+
+      <div className="mt-auto p-6 relative z-20">
+        <div className="flex items-center gap-2 mb-2">
+          {attributes.role && (
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 backdrop-blur-md">
+              {attributes.role}
+            </span>
+          )}
+          {attributes.status && (
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/80 bg-white/10 px-2.5 py-1 rounded-full border border-white/20 backdrop-blur-md">
+              {attributes.status}
+            </span>
+          )}
+        </div>
+        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors">
+          {character.name || "Untitled"}
+        </h3>
+        {attributes.summary && (
+          <p className="text-sm text-white/60 line-clamp-2 leading-relaxed">
+            {attributes.summary.replace(/<[^>]+>/g, '')}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

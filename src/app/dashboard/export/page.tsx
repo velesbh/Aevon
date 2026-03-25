@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Download,
   FileDown,
@@ -38,13 +38,18 @@ const formats: Array<{ id: ExportFormat; name: string; description: string; icon
 ];
 
 const optionList: Array<{ id: keyof ManuscriptExportOptions; label: string; translationKey?: string; description: string }> = [
-  { id: "standardManuscriptFormat", label: "Standard Manuscript Format", translationKey: 'exp.option.smf.label', description: "Courier 12pt, double-spaced, standard margins." },
-  { id: "includeTitlePage", label: "Include Title Page", translationKey: 'exp.option.titlePage.label', description: "Auto-generate a title page with your profile info." },
-  { id: "includeTableOfContents", label: "Table of Contents", description: "Generate a TOC linked to chapter headings." },
+  { id: "includeManuscript", label: "Include Manuscript", translationKey: "exp.option.manuscript.label", description: "Export all chapters and scenes." },
+  { id: "includeTitlePage", label: "Include Title Page", translationKey: "exp.option.titlePage.label", description: "Auto-generate a title page with your profile info." },
+  { id: "includeTableOfContents", label: "Table of Contents", translationKey: "exp.option.toc.label", description: "Generate a TOC linked to chapter headings." },
+  { id: "includeCharacters", label: "Include Characters", translationKey: "exp.option.characters.label", description: "Export all character profiles and details." },
+  { id: "includeLocations", label: "Include Locations", translationKey: "exp.option.locations.label", description: "Export all setting and world locations." },
+  { id: "includeLore", label: "Include Lore", translationKey: "exp.option.lore.label", description: "Export world-building lore and history." },
+  { id: "includeItems", label: "Include Items", translationKey: "exp.option.items.label", description: "Export all magical items, relics, and equipment." },
+  { id: "includeIdeas", label: "Include Ideas", translationKey: "exp.option.ideas.label", description: "Export scratchpad notes and idea snippets." },
 ];
 
 export default function ExportToolPage() {
-  const { activeProjectId, activeProjectTitle, error: workspaceError } = useDashboardWorkspace();
+  const { activeProjectId, activeProjectTitle, error: workspaceError, chapters } = useDashboardWorkspace();
   const { t } = useTranslation();
 
   const [format, setFormat] = useState<ExportFormat>("docx");
@@ -52,10 +57,38 @@ export default function ExportToolPage() {
     standardManuscriptFormat: true,
     includeTableOfContents: true,
     includeTitlePage: true,
+    includeManuscript: true,
+    includeCharacters: true,
+    includeLocations: true,
+    includeLore: true,
+    includeItems: true,
+    includeIdeas: true,
   });
 
-  const [isExporting, setIsExporting] = useState(false);
+  const [selectedChapters, setSelectedChapters] = useState<Set<string>>(new Set());
+  
+  // Update options to include only selected chapters if some are deselected
+  const getFinalOptions = () => {
+    const finalOptions = { ...options };
+    if (finalOptions.includeManuscript) {
+      if (selectedChapters.size > 0 && selectedChapters.size < (chapters?.length || 0)) {
+        finalOptions.includeManuscript = Array.from(selectedChapters);
+      } else if (selectedChapters.size === 0 && chapters && chapters.length > 0) {
+        finalOptions.includeManuscript = false; // None selected
+      }
+    }
+    return finalOptions;
+  };
+
+  // Initialize all chapters as selected when chapters load
+  useEffect(() => {
+    if (chapters && chapters.length > 0 && selectedChapters.size === 0) {
+      setSelectedChapters(new Set(chapters.map((c) => c.id)));
+    }
+  }, [chapters]);
+
   const [exportComplete, setExportComplete] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -71,7 +104,7 @@ export default function ExportToolPage() {
     setExportComplete(false);
 
     try {
-      const { blob, fileName } = await requestProjectExport(activeProjectId, format, options);
+      const { blob, fileName } = await requestProjectExport(activeProjectId, format, getFinalOptions());
       
       let isTauri = false;
       try {
@@ -116,64 +149,53 @@ export default function ExportToolPage() {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "var(--background-surface)" }}>
-      <Box
-        component="header"
-        sx={{
-          height: 80,
-          px: { xs: 3, md: 4 },
-          borderBottom: "1px solid var(--border-ui)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
-          position: "sticky",
-          top: 0,
-          bgcolor: "color-mix(in srgb, var(--background-surface) 90%, transparent)",
-          backdropFilter: "blur(8px)",
-          zIndex: 1,
-        }}
-      >
-        <Stack spacing={0.5}>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "var(--text-primary)" }}>
-            {t("dashboard.nav.export")}
-          </Typography>
-          <Typography variant="body2" sx={{ color: "var(--text-secondary)", display: { xs: "none", sm: "block" } }}>
-            {activeProjectTitle ?? "No project selected"}
-          </Typography>
-        </Stack>
-
-        <Stack direction="row" spacing={3} alignItems="center">
-          <AnimatePresence>
-            {status && (
-              <Box
-                component={motion.span}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 700, color: "var(--emerald-500, #10B981)", letterSpacing: 1 }}>
-                  {status}
-                </Typography>
-              </Box>
-            )}
-            {(error || workspaceError) && (
-              <Box
-                component={motion.span}
-                initial={{ opacity: 0, x: 12 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-              >
-                <Typography variant="caption" sx={{ fontWeight: 700, color: "#F87171", letterSpacing: 1 }}>
-                  {error ?? workspaceError}
-                </Typography>
-              </Box>
-            )}
-          </AnimatePresence>
-        </Stack>
-      </Box>
+      {/* Topbar removed for cleaner UI */}
 
       <Box sx={{ flex: 1, overflowY: "auto", py: { xs: 4, md: 8 }, px: { xs: 3, md: 6 }, maxWidth: 1280, width: "100%", mx: "auto" }}>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12">
+          <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-[var(--border-ui)]/50 bg-[var(--background-app)]">
+            <Download className="w-4 h-4 text-emerald-500" />
+            <span className="text-sm font-bold text-[var(--text-primary)]">Universal Export</span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setOptions({
+                standardManuscriptFormat: true,
+                includeTableOfContents: true,
+                includeTitlePage: true,
+                includeManuscript: true,
+                includeCharacters: true,
+                includeLocations: true,
+                includeLore: true,
+                includeItems: true,
+                includeIdeas: true,
+              })}
+              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-600/10 text-emerald-600 border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all"
+            >
+              Export Everything
+            </button>
+            <button
+               onClick={() => setOptions({
+                 standardManuscriptFormat: true,
+                 includeTableOfContents: true,
+                 includeTitlePage: true,
+                 includeManuscript: true,
+                 includeCharacters: false,
+                 includeLocations: false,
+                 includeLore: false,
+                 includeItems: false,
+                 includeIdeas: false,
+               })}
+              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-emerald-500 transition-all"
+            >
+              Manuscript Only
+            </button>
+          </div>
+        </div>
+
         <Grid container spacing={{ xs: 3, md: 5 }}>
+
           <Grid size={{ xs: 12, lg: 6 }}>
             <Stack spacing={3}>
               <Stack direction="row" spacing={1} alignItems="center">
@@ -208,6 +230,74 @@ export default function ExportToolPage() {
                   );
                 })}
               </Stack>
+
+              {options.includeManuscript && chapters && chapters.length > 0 && (
+                <>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
+                    <BookOpen className="w-5 h-5" color="#10B981" />
+                    <Typography variant="overline" sx={{ letterSpacing: 4, color: "var(--text-tertiary)", fontWeight: 700 }}>
+                      Select Manuscripts
+                    </Typography>
+                  </Stack>
+                  <Paper
+                    sx={{
+                      p: { xs: 2, md: 3 },
+                      borderRadius: 4,
+                      border: "1px solid var(--border-ui)",
+                      bgcolor: "var(--background-app)",
+                      maxHeight: 300,
+                      overflowY: "auto",
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                        {selectedChapters.size} of {chapters.length} chapters selected
+                      </Typography>
+                      <Button
+                        size="small"
+                        onClick={() => {
+                          if (selectedChapters.size === chapters.length) {
+                            setSelectedChapters(new Set());
+                          } else {
+                            setSelectedChapters(new Set(chapters.map(c => c.id)));
+                          }
+                        }}
+                      >
+                        {selectedChapters.size === chapters.length ? "Deselect All" : "Select All"}
+                      </Button>
+                    </Stack>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {chapters.map((chapter) => {
+                        const isSelected = selectedChapters.has(chapter.id);
+                        return (
+                          <div
+                            key={chapter.id}
+                            onClick={() => {
+                              const newSet = new Set(selectedChapters);
+                              if (isSelected) newSet.delete(chapter.id);
+                              else newSet.add(chapter.id);
+                              setSelectedChapters(newSet);
+                            }}
+                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-[var(--border-ui)] bg-[var(--background-surface)] hover:border-emerald-500/50'}`}
+                          >
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-[var(--text-tertiary)] bg-transparent'}`}>
+                              {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-bold text-[var(--text-primary)] truncate">
+                                {chapter.title || `Chapter ${chapter.order_index + 1}`}
+                              </p>
+                              <p className="text-xs text-[var(--text-tertiary)]">
+                                {chapter.word_count || 0} words
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Paper>
+                </>
+              )}
             </Stack>
           </Grid>
 
@@ -236,7 +326,7 @@ export default function ExportToolPage() {
                       <FormControlLabel
                         control={
                           <Switch
-                            checked={options[item.id]}
+                            checked={!!options[item.id]}
                             onChange={(event) => setOptions((prev) => ({ ...prev, [item.id]: event.target.checked }))}
                             color="success"
                             disabled={!isConfigurable || isExporting}
@@ -246,7 +336,7 @@ export default function ExportToolPage() {
                       />
                       <Box>
                         <Typography variant="subtitle2" sx={{ fontWeight: 700, color: "var(--text-primary)" }}>
-                          {item.label}
+                          {item.translationKey ? t(item.translationKey) : item.label}
                         </Typography>
                         <Typography variant="body2" sx={{ color: "var(--text-secondary)" }}>
                           {item.description}

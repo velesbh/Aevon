@@ -13,10 +13,9 @@ import Image from "@tiptap/extension-image";
 import Mention from "@tiptap/extension-mention";
 import { cn } from "@/lib/utils";
 import { RichTextToolbar } from "./rich-text-toolbar";
-import {
-  createMentionSuggestion,
-  type MentionEntity,
-} from "./mention-suggestion";
+import { createMentionSuggestion } from "./mention-suggestion";
+import type { MentionEntity } from "./mention-data";
+import { createSlashSuggestion } from "./slash-suggestion";
 import { MentionNodeView } from "./mention-node-view";
 
 export interface RichTextEditorHandle {
@@ -47,6 +46,7 @@ const MentionExtension = Mention.extend({
       label: { default: null },
       type: { default: null },
       description: { default: null },
+      folderCategory: { default: null },
     };
   },
   addNodeView() {
@@ -81,6 +81,8 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       [mentionItems],
     );
 
+    const slashSuggestion = useMemo(() => createSlashSuggestion(), []);
+
     const editor = useEditor(
       {
         immediatelyRender: false,
@@ -98,6 +100,11 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
               class: "mention",
             },
             suggestion: mentionSuggestion,
+          }),
+          Mention.extend({
+            name: "slash-command",
+          }).configure({
+            suggestion: slashSuggestion,
           }),
           Image.configure({ inline: false }),
         ],
@@ -120,8 +127,24 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
           onEditorReady?.(editor);
         },
       },
-      [placeholder, readOnly, variant],
+      [], // Only initialize once
     );
+
+    // Sync value from props if it changes externally
+    useEffect(() => {
+      if (!editor || readOnly) return;
+      
+      const currentContent = editor.getHTML();
+      if (value !== currentContent && value !== undefined) {
+        // If the editor is focused, we likely don't want to update unless it's a completely different document
+        // For autosave, value should match currentContent anyway or be close enough.
+        // Skipping update when focused prevents the editor from jumping to the top.
+        if (editor.isFocused) {
+          return;
+        }
+        editor.commands.setContent(value, { emitUpdate: false });
+      }
+    }, [value, editor, readOnly]);
 
     useImperativeHandle(
       ref,
@@ -142,6 +165,30 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
       if (!editor) return;
       editor.setEditable(!readOnly);
     }, [editor, readOnly]);
+
+    useEffect(() => {
+      if (!editor) return;
+      editor.setOptions({
+        editorProps: {
+          attributes: {
+            class: cn(
+              "ProseMirror prose prose-neutral dark:prose-invert max-w-none focus:outline-none",
+              variant === "manuscript" 
+                ? "font-serif text-lg leading-loose prose-headings:font-serif prose-p:mb-4 prose-p:leading-8" 
+                : "text-base leading-relaxed"
+            ),
+          },
+        },
+      });
+    }, [editor, variant]);
+
+    useEffect(() => {
+      const handleOpenPicker = () => {
+        onOpenImagePicker?.();
+      };
+      window.addEventListener("aevon:open-image-picker", handleOpenPicker);
+      return () => window.removeEventListener("aevon:open-image-picker", handleOpenPicker);
+    }, [onOpenImagePicker]);
 
     return (
       <div className={cn("rich-text-editor space-y-2", className)}>

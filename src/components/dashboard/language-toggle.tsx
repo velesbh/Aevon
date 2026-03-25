@@ -15,7 +15,7 @@ export function DashboardLanguageToggle() {
 
   if (!mounted) {
     return (
-      <div className="rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-app)] p-1 h-12" />
+      <div className="rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-app)] p-1 h-[42px]" />
     );
   }
 
@@ -35,7 +35,7 @@ export function DashboardLanguageToggle() {
               type="button"
               onClick={() => setLanguage(option.id)}
               className={cn(
-                "relative z-10 inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors duration-200",
+                "relative z-10 inline-flex items-center justify-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-medium transition-colors duration-200",
                 isActive
                   ? "text-[var(--text-primary)]"
                   : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",

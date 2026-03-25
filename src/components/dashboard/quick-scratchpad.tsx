@@ -1,83 +1,110 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TextField, Box, Typography, alpha, useTheme, Tooltip } from "@mui/material";
 import { ProjectRecord } from "@/lib/workspace";
-import { Check } from "lucide-react";
+import { Check, Cloud } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import { useDashboardWorkspace } from "./workspace-provider";
 
 interface QuickScratchpadProps {
   project: ProjectRecord;
 }
 
-const SCRATCHPAD_STORAGE_KEY_PREFIX = "aevon.scratchpad.";
-
 export function QuickScratchpad({ project }: QuickScratchpadProps) {
   const { t } = useTranslation();
-  
-  // Load initial value from localStorage ONLY
-  const [value, setValue] = useState(() => {
-    if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem(`${SCRATCHPAD_STORAGE_KEY_PREFIX}${project.id}`);
-      if (stored !== null) return stored;
-    }
-    return "";
-  });
-  
-  const [status, setStatus] = useState<"idle" | "saved">("idle");
+  const { saveActiveProjectRecord } = useDashboardWorkspace();
   const theme = useTheme();
+  
+  const [value, setValue] = useState(project.scratchpad || "");
+  const [status, setStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const lastSavedValue = useRef(project.scratchpad || "");
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle project switching
+  // Sync when project changes
   useEffect(() => {
-    const stored = window.localStorage.getItem(`${SCRATCHPAD_STORAGE_KEY_PREFIX}${project.id}`);
-    setValue(stored !== null ? stored : "");
+    setValue(project.scratchpad || "");
+    lastSavedValue.current = project.scratchpad || "";
     setStatus("idle");
-  }, [project.id]);
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+  }, [project.id, project.scratchpad]);
+
+  const saveImmediately = async (val: string) => {
+    if (val === lastSavedValue.current) return;
+    setStatus("saving");
+    try {
+      await saveActiveProjectRecord({ scratchpad: val });
+      lastSavedValue.current = val;
+      setStatus("saved");
+      setTimeout(() => setStatus("idle"), 2000);
+    } catch (err) {
+      console.error("Failed to save scratchpad:", err);
+      setStatus("idle");
+    }
+  };
+
+  // Save on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+        // We can't really await here, but we can fire the save
+        if (value !== lastSavedValue.current) {
+          saveActiveProjectRecord({ scratchpad: value }).catch(console.error);
+        }
+      }
+    };
+  }, [value, saveActiveProjectRecord]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setValue(newValue);
+    setStatus("idle");
+
+    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     
-    // Save to localStorage immediately
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(`${SCRATCHPAD_STORAGE_KEY_PREFIX}${project.id}`, newValue);
-    }
-    
-    setStatus("saved");
-    
-    // Reset to idle after a brief moment
-    setTimeout(() => {
-      setStatus("idle");
-    }, 2000);
+    saveTimeoutRef.current = setTimeout(() => {
+      saveImmediately(newValue);
+    }, 1000);
   };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid", borderColor: "divider", px: 3, py: 2.5 }}>
+      <Box sx={{ 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "space-between", 
+        borderBottom: "1px solid", 
+        borderColor: "divider", 
+        px: 3, 
+        py: 2.5,
+        backgroundColor: alpha(theme.palette.background.paper, 0.4),
+        backdropFilter: "blur(10px)"
+      }}>
         <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 2 }}>
           {t("dash.scratchpad.title")}
         </Typography>
         
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {status === "saved" && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          {status === "saving" ? (
+            <Cloud size={16} className="text-emerald-400 animate-pulse" />
+          ) : status === "saved" ? (
             <Tooltip title={t("dash.scratchpad.saved")}>
               <Check size={16} className="text-green-500" />
             </Tooltip>
-          )}
+          ) : null}
           
-          {/* Status Dot */}
           <Box
             sx={{
               width: 8,
               height: 8,
               borderRadius: "50%",
-              bgcolor: status === "saved" ? "success.main" : "success.main",
-              boxShadow: `0 0 0 4px ${alpha(
-                theme.palette.success.main,
+              bgcolor: status === "saving" ? "info.main" : status === "saved" ? "success.main" : "text.disabled",
+              boxShadow: status !== "idle" ? `0 0 0 4px ${alpha(
+                status === "saving" ? theme.palette.info.main : theme.palette.success.main,
                 0.2
-              )}`,
+              )}` : 'none',
               transition: "all 0.3s ease",
-              opacity: status === "saved" ? 1 : 0.5
             }}
           />
         </Box>
@@ -94,10 +121,13 @@ export function QuickScratchpad({ project }: QuickScratchpadProps) {
           InputProps={{
             disableUnderline: true,
             sx: {
-              color: "text.secondary",
+              color: "text.primary",
               height: "100%",
               alignItems: "start",
-              overflow: "auto"
+              overflow: "auto",
+              fontSize: "0.95rem",
+              lineHeight: 1.6,
+              fontFamily: 'inherit'
             }
           }}
         />

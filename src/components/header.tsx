@@ -39,7 +39,7 @@ export function Header() {
     <motion.header
       className={cn(
         "fixed top-0 w-full z-50 flex justify-center transition-all duration-500",
-        isScrolled ? "pt-4" : "pt-6"
+        isScrolled ? "pt-2" : "pt-4"
       )}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -47,23 +47,23 @@ export function Header() {
     >
       <div 
         className={cn(
-          "flex items-center justify-between px-4 transition-all duration-500",
+          "flex items-center justify-between px-3 transition-all duration-500",
           isScrolled 
-            ? "w-[90%] md:w-[800px] bg-background/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-full py-2.5" 
-            : "w-full container mx-auto md:px-8 py-3 bg-transparent border-transparent"
+            ? "w-[90%] md:w-[700px] bg-background/60 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] rounded-full py-1.5" 
+            : "w-full container mx-auto md:px-4 py-2 bg-transparent border-transparent"
         )}
       >
-        <Link href="/" className="flex items-center gap-2 group pl-2">
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500/20 group-hover:text-brand-400 overflow-hidden">
+        <Link href="/" className="flex items-center gap-1.5 group pl-1">
+          <div className="relative flex items-center justify-center w-6 h-6 rounded-full bg-brand-500/10 text-brand-500 transition-colors group-hover:bg-brand-500/20 group-hover:text-brand-400 overflow-hidden">
             <Image 
               src="/aevon.png" 
               alt="Aevon Logo" 
-              width={32} 
-              height={32} 
-              className="w-5 h-5 object-contain"
+              width={24} 
+              height={24} 
+              className="w-4 h-4 object-contain"
             />
           </div>
-          <span className="font-semibold text-base tracking-tight text-foreground/90 group-hover:text-foreground transition-colors">Aevon</span>
+          <span className="font-semibold text-sm tracking-tight text-foreground/90 group-hover:text-foreground transition-colors">Aevon</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

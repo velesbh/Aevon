@@ -30,6 +30,7 @@ export interface ProjectRecord {
   description: string | null;
   genre: string | null;
   scratchpad: string | null;
+  settings: JsonValue | null;
   created_at: string;
   updated_at: string;
 }
@@ -45,7 +46,7 @@ export interface ChapterRecord {
   updated_at: string;
 }
 
-export type WorldElementType = "character" | "location" | "lore" | "item" | "lore_diagram";
+export type WorldElementType = "character" | "location" | "lore" | "item" | "lore_diagram" | "idea" | "map";
 
 export interface WorldElementRecord {
   id: string;
@@ -79,6 +80,9 @@ export interface CharacterAttributes {
   arc: string;
   notes: string;
   status: string;
+  nationality: string;
+  age: string;
+  occupation: string;
   image_path?: string;
   image_updated_at?: string;
   [key: string]: JsonValue | undefined;
@@ -90,6 +94,12 @@ export interface ManuscriptExportOptions {
   standardManuscriptFormat: boolean;
   includeTableOfContents: boolean;
   includeTitlePage: boolean;
+  includeCharacters?: boolean;
+  includeLocations?: boolean;
+  includeLore?: boolean;
+  includeItems?: boolean;
+  includeIdeas?: boolean;
+  includeManuscript?: boolean | string[];
 }
 
 export interface RequestedExport {
@@ -163,7 +173,9 @@ function getDefaultWorldName(type: WorldElementType, total: number) {
           ? "Lore Entry"
           : type === "lore_diagram"
             ? "Diagram"
-            : "Item";
+            : type === "idea"
+              ? "Idea"
+              : "Item";
 
   return `New ${label} ${total + 1}`;
 }
@@ -313,6 +325,9 @@ export function getDefaultCharacterAttributes(): CharacterAttributes {
     arc: "",
     notes: "",
     status: "Active",
+    nationality: "",
+    age: "",
+    occupation: "",
     image_path: "",
     image_updated_at: "",
   };
@@ -333,6 +348,9 @@ export function getCharacterAttributes(attributes: WorldElementRecord["attribute
     arc: readAttributeString(attributeObject.arc, defaults.arc),
     notes: readAttributeString(attributeObject.notes, defaults.notes),
     status: readAttributeString(attributeObject.status, defaults.status),
+    nationality: readAttributeString(attributeObject.nationality, defaults.nationality),
+    age: readAttributeString(attributeObject.age, defaults.age),
+    occupation: readAttributeString(attributeObject.occupation, defaults.occupation),
     image_path: readAttributeString(attributeObject.image_path, defaults.image_path),
     image_updated_at: readAttributeString(attributeObject.image_updated_at, defaults.image_updated_at),
   };
@@ -447,36 +465,56 @@ export async function bootstrapWorkspaceForUser(
     throw profileError;
   }
 
-  const { data: existingProject, error: projectLookupError } = await client
+  const { data: existingProjects, error: projectsLookupError } = await client
     .from("projects")
-    .select("*")
+    .select("id")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle<ProjectRecord>();
+    .limit(1);
 
-  if (projectLookupError) {
-    throw projectLookupError;
+  if (projectsLookupError) {
+    throw projectsLookupError;
   }
 
-  let project = existingProject;
+  let project: ProjectRecord | null = null;
+
+  if (existingProjects && existingProjects.length > 0) {
+    const { data: fullProject, error: fullProjectError } = await client
+      .from("projects")
+      .select("*")
+      .eq("id", existingProjects[0].id)
+      .single<ProjectRecord>();
+    
+    if (fullProjectError) throw fullProjectError;
+    project = fullProject;
+  }
 
   if (!project) {
-    const { data: insertedProject, error: insertProjectError } = await client
+    // Try one last check for current projects list to avoid race condition in parallel calls
+    const { data: retryProjects } = await client
       .from("projects")
-      .insert({
-        user_id: user.id,
-        title: options?.projectName ?? metadata.projectName ?? "Untitled Project",
-        genre: metadata.genre,
-      })
       .select("*")
-      .single<ProjectRecord>();
+      .eq("user_id", user.id)
+      .limit(1);
+    
+    if (retryProjects && retryProjects.length > 0) {
+      project = retryProjects[0] as ProjectRecord;
+    } else {
+      const { data: insertedProject, error: insertProjectError } = await client
+        .from("projects")
+        .insert({
+          user_id: user.id,
+          title: options?.projectName ?? metadata.projectName ?? "Untitled Project",
+          genre: metadata.genre,
+        })
+        .select("*")
+        .single<ProjectRecord>();
 
-    if (insertProjectError) {
-      throw insertProjectError;
+      if (insertProjectError) {
+        throw insertProjectError;
+      }
+
+      project = insertedProject;
     }
-
-    project = insertedProject;
   }
 
   const { count, error: chapterCountError } = await client
@@ -780,7 +818,7 @@ export async function createCharacterImageSignedUrl(storagePath: string) {
 export async function createWorldElement(
   projectId: string,
   type: WorldElementType,
-  options?: { name?: string; category?: string },
+  options?: { name?: string; category?: string; description?: string },
 ) {
   const client = requireSupabase();
   const { count, error: countError } = await client
@@ -806,7 +844,7 @@ export async function createWorldElement(
       project_id: projectId,
       type,
       name: options?.name ?? getDefaultWorldName(type, count ?? 0),
-      description: "",
+      description: options?.description ?? "",
       attributes: defaults,
     })
     .select("*")
@@ -863,32 +901,183 @@ export async function requestProjectExport(
 
   const client = requireSupabase();
   const { data: project } = await client.from("projects").select("*").eq("id", projectId).single();
-  const { data: chapters } = await client.from("chapters").select("*").eq("project_id", projectId).order("order_index", { ascending: true });
-
-  if (!project || !chapters) {
-    throw new Error("Project or chapters not found.");
+  
+  if (!project) {
+    throw new Error("Project not found.");
   }
 
   let content = "";
   if (options.includeTitlePage) {
     content += `# ${project.title}\n\n`;
-  }
-  
-  if (options.includeTableOfContents) {
-    content += `## Table of Contents\n\n`;
-    chapters.forEach((chapter, index) => {
-      content += `${index + 1}. ${chapter.title}\n`;
-    });
-    content += `\n`;
+    if (project.description) {
+      content += `${project.description}\n\n`;
+    }
+    content += `***\n\n`;
   }
 
-  chapters.forEach((chapter) => {
-    content += `## ${chapter.title}\n\n`;
-    content += `${getChapterText(chapter.content)}\n\n`;
-  });
+  // Manuscript
+  if (options.includeManuscript !== false) {
+    let chapters = null;
+    let chaptersQuery = client
+      .from("chapters")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("order_index", { ascending: true });
+
+    if (Array.isArray(options.includeManuscript)) {
+      if (options.includeManuscript.length === 0) {
+        chapters = [];
+      } else {
+        chaptersQuery = chaptersQuery.in("id", options.includeManuscript);
+        const { data } = await chaptersQuery;
+        chapters = data;
+      }
+    } else {
+      const { data } = await chaptersQuery;
+      chapters = data;
+    }
+
+    if (chapters && chapters.length > 0) {
+      if (options.includeTableOfContents) {
+        content += `## Table of Contents\n\n`;
+        chapters.forEach((chapter, index) => {
+          content += `${index + 1}. ${chapter.title}\n`;
+        });
+        content += `\n***\n\n`;
+      }
+
+      chapters.forEach((chapter) => {
+        content += `## ${chapter.title}\n\n`;
+        content += `${getChapterText(chapter.content)}\n\n`;
+      });
+    }
+  }
+
+  // World Elements
+  const worldSections = [
+    { key: "includeCharacters", type: "character", title: "Characters" },
+    { key: "includeLocations", type: "location", title: "Locations" },
+    { key: "includeLore", type: "lore", title: "World Lore" },
+    { key: "includeItems", type: "item", title: "Items & Relics" },
+    { key: "includeIdeas", type: "idea", title: "Ideas & Snippets" },
+  ];
+
+  for (const section of worldSections) {
+    if (options[section.key as keyof ManuscriptExportOptions]) {
+      const { data: elements } = await client
+        .from("world_elements")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("type", section.type)
+        .order("name", { ascending: true });
+
+      if (elements && elements.length > 0) {
+        content += `\n***\n\n# ${section.title}\n\n`;
+        elements.forEach((el) => {
+          content += `## ${el.name}\n\n`;
+          if (el.description) {
+            content += `${el.description}\n\n`;
+          }
+          
+          if (section.type === "character") {
+            const attrs = getCharacterAttributes(el.attributes);
+            content += `**Role:** ${attrs.role}\n`;
+            content += `**Status:** ${attrs.status}\n`;
+            if (attrs.nationality) content += `**Nationality:** ${attrs.nationality}\n`;
+            if (attrs.age) content += `**Age:** ${attrs.age}\n`;
+            if (attrs.occupation) content += `**Occupation:** ${attrs.occupation}\n`;
+            content += `\n`;
+            if (attrs.summary) content += `### Summary\n${attrs.summary}\n\n`;
+            if (attrs.personality) content += `### Personality\n${attrs.personality}\n\n`;
+            if (attrs.motivation) content += `### Motivation\n${attrs.motivation}\n\n`;
+          } else {
+            // Generic attributes for other types if any
+            const attrs = getAttributesObject(el.attributes);
+            Object.entries(attrs).forEach(([k, v]) => {
+              if (k !== "image_path" && k !== "image_updated_at" && v) {
+                content += `**${k.charAt(0).toUpperCase() + k.slice(1)}:** ${v}\n`;
+              }
+            });
+            content += `\n`;
+          }
+        });
+      }
+    }
+  }
+
+  const fallbackFileName = `${sanitizeFileName(project.title)}.${format}`;
+
+  if (format === "pdf") {
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF();
+    
+    // Very basic markdown to PDF conversion for now
+    // In a real app we might want a more sophisticated parser
+    const lines = content.split('\n');
+    let cursorY = 20;
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const maxLineWidth = pageWidth - margin * 2;
+
+    doc.setFontSize(18);
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.startsWith('# ')) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(26);
+        cursorY += 15;
+      } else if (line.startsWith('## ')) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(20);
+        cursorY += 12;
+      } else if (line.startsWith('### ')) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(16);
+        cursorY += 8;
+      } else if (line.startsWith('**')) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(12);
+      } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+      }
+
+      const text = line.replace(/^#+ /, '');
+      const wrappedText = doc.splitTextToSize(text, maxLineWidth);
+      
+      if (cursorY + (wrappedText.length * 7) > doc.internal.pageSize.getHeight() - margin) {
+        doc.addPage();
+        // Add page number
+        const pageNum = doc.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(`Page ${pageNum}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, { align: 'center' });
+        doc.setFontSize(12);
+        cursorY = margin;
+      }
+
+      doc.text(wrappedText, margin, cursorY);
+      cursorY += wrappedText.length * 7;
+      
+      if (line === "***") {
+        doc.setDrawColor(200, 200, 200);
+        doc.line(margin, cursorY - 2, pageWidth - margin, cursorY - 2);
+        cursorY += 8;
+      }
+      
+      if (line.trim() === "") {
+        cursorY += 3;
+      }
+    }
+
+    return {
+      blob: doc.output("blob"),
+      contentType: "application/pdf",
+      fileName: fallbackFileName,
+    };
+  }
 
   const blob = new Blob([content], { type: "text/plain" });
-  const fallbackFileName = `${sanitizeFileName(project.title)}.${format}`;
 
   return {
     blob,
@@ -926,7 +1115,7 @@ export async function updateWorkspaceProfile(
 
 export async function updateProject(
   id: string,
-  updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre" | "scratchpad">>
+  updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre" | "scratchpad" | "settings">>
 ) {
   const client = requireSupabase();
   
@@ -945,6 +1134,58 @@ export async function updateProject(
   }
 
   return data;
+}
+
+export async function reorderChapters(chapterIds: string[]) {
+  const client = requireSupabase();
+  const updates = chapterIds.map((id, index) => ({
+    id,
+    order_index: index,
+  }));
+
+  const { error } = await client.from("chapters").upsert(updates);
+  if (error) {
+    throw error;
+  }
+}
+
+export async function reorderWorldElements(elementIds: string[]) {
+  const client = requireSupabase();
+  
+  // First fetch the elements to get their existing attributes and other fields
+  const { data: elements, error: fetchError } = await client
+    .from("world_elements")
+    .select("*")
+    .in("id", elementIds);
+    
+  if (fetchError || !elements) {
+    throw fetchError || new Error("Failed to fetch world elements for reordering");
+  }
+
+  // Create updates by taking existing element data and updating the position attribute
+  const updates = elementIds.map((id, index) => {
+    const existing = elements.find(e => e.id === id);
+    if (!existing) throw new Error(`Element ${id} not found`);
+    
+    // We update the updated_at to satisfy the schema, and modify attributes to store the order
+    return {
+      id: existing.id,
+      project_id: existing.project_id,
+      type: existing.type,
+      name: existing.name,
+      description: existing.description,
+      attributes: {
+        ...getAttributesObject(existing.attributes),
+        order_index: index
+      },
+      updated_at: new Date().toISOString()
+    };
+  });
+
+  const { error } = await client.from("world_elements").upsert(updates);
+  if (error) {
+    throw error;
+  }
 }
 
 export async function createProject(title: string, genre?: string | null) {

@@ -2,7 +2,8 @@
  * Core logic for .aevon export/import functionality.
  */
 
-// Helper to check if running inside Tauri
+import { requireSupabase } from "@/lib/supabase";
+
 export const isTauriEnvironment = () => {
   return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
 };
@@ -17,9 +18,21 @@ export async function exportAevonProject(projectId: string): Promise<boolean> {
     const { save } = await import('@tauri-apps/plugin-dialog');
     const { writeFile } = await import('@tauri-apps/plugin-fs');
 
+    const client = requireSupabase();
+
+    const [
+      { data: project },
+      { data: chapters },
+      { data: worldElements }
+    ] = await Promise.all([
+      client.from("projects").select("*").eq("id", projectId).single(),
+      client.from("chapters").select("*").eq("project_id", projectId),
+      client.from("world_elements").select("*").eq("project_id", projectId)
+    ]);
+
     const filePath = await save({
       title: 'Export Aevon Project',
-      defaultPath: `project-${projectId}.aevon`,
+      defaultPath: `project-${project?.title || projectId}.aevon`,
       filters: [{ name: 'Aevon Project', extensions: ['aevon'] }]
     });
 
@@ -27,7 +40,13 @@ export async function exportAevonProject(projectId: string): Promise<boolean> {
       return false;
     }
 
-    const data = JSON.stringify({ projectId, exportedAt: new Date().toISOString() });
+    const data = JSON.stringify({
+      projectId,
+      exportedAt: new Date().toISOString(),
+      project,
+      chapters,
+      worldElements
+    });
     const buffer = new TextEncoder().encode(data);
     await writeFile(filePath, new Uint8Array(buffer));
 

@@ -1,24 +1,21 @@
 "use client";
 
 import type { MentionNodeAttrs } from "@tiptap/extension-mention";
-import type { SuggestionKeyDownProps, SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
-import tippy, { type Instance as TippyInstance } from "tippy.js";
-
-export type MentionEntityType = "character" | "location" | "item" | "lore";
-
-export interface MentionEntity {
-  id: string;
-  label: string;
-  type: MentionEntityType;
-  description?: string | null;
-  imageUrl?: string | null;
-}
-
-export interface MentionSuggestionConfig {
-  maxResults?: number;
-  recentLimit?: number;
-  typeOrder?: MentionEntityType[];
-}
+import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
+import { ReactRenderer } from "@tiptap/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
+import {
+  DEFAULT_FOLDER_GROUP_ORDER,
+  DEFAULT_MENTION_TYPE_ORDER,
+  MENTION_FOLDER_GROUPS,
+  MENTION_TYPE_METADATA,
+  type MentionEntity,
+  type MentionEntityType,
+  type MentionFolderCategory,
+  type MentionSuggestionConfig,
+} from "./mention-data";
 
 type MentionItemMeta = {
   isRecent: boolean;
@@ -30,43 +27,14 @@ type DropdownSection = {
   title: string;
   accentClass: string;
   items: MentionEntity[];
-};
-
-const TYPE_METADATA: Record<MentionEntityType, { label: string; accentClass: string; badgeClass: string; icon: string }> = {
-  character: {
-    label: "Characters",
-    accentClass: "text-rose-500 dark:text-rose-300",
-    badgeClass: "bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-200",
-    icon: "👤",
-  },
-  location: {
-    label: "Locations",
-    accentClass: "text-sky-500 dark:text-sky-300",
-    badgeClass: "bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-200",
-    icon: "📍",
-  },
-  item: {
-    label: "Artifacts",
-    accentClass: "text-amber-500 dark:text-amber-300",
-    badgeClass: "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-200",
-    icon: "🗝️",
-  },
-  lore: {
-    label: "Lore",
-    accentClass: "text-emerald-500 dark:text-emerald-300",
-    badgeClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200",
-    icon: "📜",
-  },
+  badgeClass?: string;
+  chipClass?: string;
+  icon?: string;
+  description?: string | null;
+  folderName?: string;
 };
 
 const RECENT_STORAGE_KEY = "aevon/mention-recents";
-const ACTIVE_CLASSES = [
-  "bg-[var(--accent-primary-transparent)]",
-  "border",
-  "border-[var(--accent-primary)]/60",
-  "shadow-sm",
-];
-
 const mentionMeta = new Map<string, MentionItemMeta>();
 
 function escapeRegExp(value: string) {
@@ -191,6 +159,17 @@ function rankMentions(
   return scored;
 }
 
+interface FolderBucket {
+  key: string;
+  category: MentionFolderCategory;
+  section: DropdownSection;
+  items: MentionEntity[];
+}
+
+function normalizeFolderCategory(value?: MentionFolderCategory | null): MentionFolderCategory {
+  return value && value in MENTION_FOLDER_GROUPS ? value : "other";
+}
+
 function buildSections(
   items: MentionEntity[],
   query: string,
@@ -199,15 +178,42 @@ function buildSections(
   const normalizedQuery = query.trim().toLowerCase();
   const sections: DropdownSection[] = [];
   const used = new Set<string>();
-  const typeBuckets = new Map<MentionEntityType, MentionEntity[]>();
+  const folderBuckets = new Map<string, FolderBucket>();
+
+  const ensureFolderBucket = (entity: MentionEntity): FolderBucket => {
+    const category = normalizeFolderCategory(entity.folderCategory);
+    const folderKey = entity.folderId ?? `${category}-${entity.folderName ?? "unknown"}`;
+    const existing = folderBuckets.get(folderKey);
+    if (existing) {
+      return existing;
+    }
+    const groupMeta = MENTION_FOLDER_GROUPS[category];
+    const section: DropdownSection = {
+      key: folderKey,
+      title: entity.folderName ?? groupMeta.label,
+      accentClass: groupMeta.accentClass,
+      badgeClass: groupMeta.badgeClass,
+      chipClass: groupMeta.chipClass,
+      icon: entity.folderIcon ?? groupMeta.icon,
+      description: entity.folderDescription,
+      folderName: entity.folderName,
+      items: [],
+    };
+    const bucket: FolderBucket = {
+      key: folderKey,
+      category,
+      section,
+      items: section.items,
+    };
+    folderBuckets.set(folderKey, bucket);
+    return bucket;
+  };
 
   for (const item of items) {
-    const bucket = typeBuckets.get(item.type) ?? [];
-    bucket.push(item);
-    typeBuckets.set(item.type, bucket);
+    ensureFolderBucket(item).items.push(item);
   }
 
-  const recents = items.filter((item) => mentionMeta.get(item.id)?.isRecent);
+  const recents = config.includeRecents ? items.filter((item) => mentionMeta.get(item.id)?.isRecent) : [];
   if (!normalizedQuery && recents.length) {
     sections.push({
       key: "recent",
@@ -218,18 +224,27 @@ function buildSections(
     recents.forEach((item) => used.add(item.id));
   }
 
-  config.typeOrder.forEach((type) => {
-    const bucket = (typeBuckets.get(type) ?? []).filter((item) => !used.has(item.id));
-    if (!bucket.length) {
+  const folderOrder = config.folderOrder ?? DEFAULT_FOLDER_GROUP_ORDER;
+  const sortedBuckets = Array.from(folderBuckets.values()).sort((left, right) => {
+    const leftWeight = folderOrder.indexOf(left.category);
+    const rightWeight = folderOrder.indexOf(right.category);
+    if (leftWeight !== rightWeight) {
+      return (leftWeight === -1 ? folderOrder.length : leftWeight) -
+        (rightWeight === -1 ? folderOrder.length : rightWeight);
+    }
+    return (left.section.folderName ?? left.section.title).localeCompare(right.section.folderName ?? right.section.title);
+  });
+
+  sortedBuckets.forEach((bucket) => {
+    const itemsForSection = bucket.items.filter((item) => !used.has(item.id));
+    if (!itemsForSection.length) {
       return;
     }
     sections.push({
-      key: type,
-      title: TYPE_METADATA[type].label,
-      accentClass: TYPE_METADATA[type].accentClass,
-      items: bucket,
+      ...bucket.section,
+      items: itemsForSection,
     });
-    bucket.forEach((item) => used.add(item.id));
+    itemsForSection.forEach((item) => used.add(item.id));
   });
 
   const remaining = items.filter((item) => !used.has(item.id));
@@ -245,134 +260,75 @@ function buildSections(
   return sections;
 }
 
-function toggleActiveState(button: HTMLButtonElement, isActive: boolean) {
-  if (isActive) {
-    button.classList.add(...ACTIVE_CLASSES);
-    button.setAttribute("aria-selected", "true");
-  } else {
-    button.classList.remove(...ACTIVE_CLASSES);
-    button.setAttribute("aria-selected", "false");
-  }
-}
-
-function buildDropdown({
-  sections,
-  query,
-  selectedIndex,
-  onSelect,
-  onHover,
-}: {
-  sections: DropdownSection[];
-  query: string;
-  selectedIndex: number;
-  onSelect: (item: MentionEntity, index: number) => void;
-  onHover: (index: number) => void;
-}) {
-  const container = document.createElement("div");
-  container.className = "mention-dropdown p-2 bg-[var(--background-app)] border border-[var(--border-ui)] rounded-xl shadow-2xl max-h-[320px] overflow-y-auto flex flex-col min-w-[320px]";
-  const buttons: HTMLButtonElement[] = [];
-
-  if (!sections.length) {
-    const empty = document.createElement("div");
-    empty.className = "px-4 py-6 text-center text-sm text-[var(--foreground-muted)]";
-    empty.innerHTML = `No matches for <span class="font-semibold text-[var(--foreground-default)]">@${escapeHtml(query)}</span>`;
-    container.appendChild(empty);
-    return { container, buttons };
-  }
-
-  let globalIndex = 0;
-  sections.forEach((section, sectionIndex) => {
-    const header = document.createElement("div");
-    header.className = "mt-2 first:mt-0 px-3 pb-1 text-[10px] tracking-[0.3em] uppercase font-semibold flex items-center gap-2 text-[var(--foreground-muted)]";
-    header.innerHTML = `
-      <span class="h-1 w-6 rounded-full bg-[var(--border-ui)]"></span>
-      <span class="${section.accentClass}">${section.title}</span>
-    `;
-    container.appendChild(header);
-
-    section.items.forEach((item) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.dataset.index = String(globalIndex);
-      button.className = "mention-dropdown__item relative w-full text-left px-3 py-2 rounded-lg flex items-center gap-3 transition-colors focus:outline-none border border-transparent";
-      const typeMeta = TYPE_METADATA[item.type];
-      const avatar = item.imageUrl
-        ? `<img src="${item.imageUrl}" alt="" class="w-10 h-10 rounded-full object-cover border border-[var(--border-ui)]" />`
-        : `<div class="w-10 h-10 rounded-full border border-[var(--border-ui)] bg-[var(--surface-sunken)] text-base flex items-center justify-center">${typeMeta.icon}</div>`;
-      const highlightedLabel = highlightText(item.label, query);
-      const highlightedDescription = item.description ? highlightText(item.description, query) : "";
-      button.innerHTML = `
-        ${avatar}
-        <div class="flex flex-col min-w-0 flex-1">
-          <div class="flex items-center gap-2">
-            <span class="font-semibold text-sm text-[var(--foreground-default)] truncate">@${highlightedLabel}</span>
-            <span class="text-[10px] px-1.5 py-0.5 rounded-full ${typeMeta.badgeClass}">${item.type}</span>
-          </div>
-          ${highlightedDescription ? `<p class="text-xs text-[var(--foreground-muted)] line-clamp-2 leading-snug">${highlightedDescription}</p>` : ""}
-        </div>
-        <span class="text-[10px] font-mono text-[var(--foreground-muted)]">${String(sectionIndex + 1)}.${globalIndex + 1}</span>
-      `;
-      button.addEventListener("mouseenter", () => onHover(globalIndex));
-      button.addEventListener("click", () => onSelect(item, globalIndex));
-      toggleActiveState(button, globalIndex === selectedIndex);
-      buttons.push(button);
-      container.appendChild(button);
-      globalIndex += 1;
-    });
-  });
-
-  return { container, buttons };
-}
-
 export function createMentionSuggestion(
   getItems: () => MentionEntity[],
   configOverrides?: MentionSuggestionConfig,
 ): Omit<SuggestionOptions, "editor"> {
-  let popup: TippyInstance | null = null;
-  let buttons: HTMLButtonElement[] = [];
+  let groupedItems: MentionEntity[] = [];
   let activeIndex = 0;
   let cachedItems: MentionEntity[] = [];
+  let renderer: ReactRenderer<MentionDropdownProps> | null = null;
+  let mountElement: HTMLElement | null = null;
+  let latestProps: SuggestionProps<MentionEntity, MentionNodeAttrs> | null = null;
   const config: Required<MentionSuggestionConfig> = {
     maxResults: 12,
     recentLimit: 10,
-    typeOrder: ["character", "location", "item", "lore"],
+    typeOrder: DEFAULT_MENTION_TYPE_ORDER,
+    folderOrder: DEFAULT_FOLDER_GROUP_ORDER,
+    includeRecents: true,
     ...configOverrides,
   };
 
-  const syncActiveState = (index: number) => {
-    buttons.forEach((button, idx) => {
-      toggleActiveState(button, idx === index);
-      if (idx === index) {
-        button.scrollIntoView({ block: "nearest" });
-      }
-    });
-  };
-
-  const updateDropdown = (props: any) => {
-    cachedItems = props.items as MentionEntity[];
-    const sections = buildSections(cachedItems, props.query, config);
-    const { container, buttons: builtButtons } = buildDropdown({
-      sections,
-      query: props.query,
-      selectedIndex: activeIndex,
+  const buildDropdownProps = (): MentionDropdownProps | null => {
+    if (!latestProps) {
+      return null;
+    }
+    return {
+      clientRect: latestProps.clientRect as (() => DOMRect | null) | undefined,
+      query: latestProps.query,
+      sections: buildSections(groupedItems.length ? groupedItems : cachedItems, latestProps.query, config),
+      activeIndex,
+      totalResults: cachedItems.length,
+      onHighlight: (index) => {
+        activeIndex = index;
+        updateRenderer();
+      },
       onSelect: (item, index) => {
         activeIndex = index;
-        syncActiveState(activeIndex);
-        props.command?.(item as MentionNodeAttrs);
+        latestProps?.command?.(item as MentionNodeAttrs);
       },
-      onHover: (index) => {
-        activeIndex = index;
-        syncActiveState(activeIndex);
-      },
-    });
-    buttons = builtButtons;
-    return container;
+    };
+  };
+
+  const updateRenderer = () => {
+    if (!renderer) {
+      return;
+    }
+    const nextProps = buildDropdownProps();
+    if (nextProps) {
+      renderer.updateProps(nextProps);
+    }
+  };
+
+  const destroyRenderer = () => {
+    renderer?.destroy();
+    renderer = null;
+    if (mountElement?.parentNode) {
+      mountElement.parentNode.removeChild(mountElement);
+    }
+    mountElement = null;
+    latestProps = null;
   };
 
   return {
     char: "@",
     allowSpaces: true,
-    items: ({ query }) => rankMentions(getItems(), query, config),
+     items: ({ query }) => {
+       groupedItems = getItems();
+       const ranked = rankMentions(groupedItems, query, config);
+       cachedItems = ranked;
+       return ranked;
+     },
     command: ({ editor, range, props }) => {
       trackMentionUsage(props.id, config.recentLimit);
       editor
@@ -381,7 +337,7 @@ export function createMentionSuggestion(
         .insertContentAt(range, [
           {
             type: "mention",
-            attrs: { id: props.id, label: props.label, type: props.type, description: props.description },
+            attrs: { id: props.id, label: props.label, type: props.type, description: props.description, folderCategory: props.folderCategory },
           },
           {
             type: "text",
@@ -393,50 +349,41 @@ export function createMentionSuggestion(
     render() {
       return {
         onStart: (props) => {
+          latestProps = props;
+          cachedItems = props.items as MentionEntity[];
           activeIndex = 0;
-          const dropdown = updateDropdown(props);
-          popup = tippy("body", {
-            getReferenceClientRect: props.clientRect as () => DOMRect,
-            content: dropdown,
-            showOnCreate: true,
-            interactive: true,
-            trigger: "manual",
-            placement: "bottom-start",
-            arrow: false,
-            theme: "light-border",
-          })[0];
+          renderer = new ReactRenderer(MentionDropdown, {
+            editor: props.editor,
+            props: buildDropdownProps() ?? undefined,
+          });
+          mountElement = renderer.element;
+          document.body.appendChild(mountElement);
         },
-        onUpdate(props) {
-          if (!popup) {
-            return;
-          }
+        onUpdate: (props) => {
+          latestProps = props;
           cachedItems = props.items as MentionEntity[];
           activeIndex = Math.min(activeIndex, Math.max(cachedItems.length - 1, 0));
-          popup.setProps({ getReferenceClientRect: props.clientRect as () => DOMRect });
-          if (popup.popper.firstChild) {
-            popup.popper.firstChild.remove();
-          }
-          popup.popper.appendChild(updateDropdown(props));
+          updateRenderer();
         },
-        onKeyDown(props: any) {
-          if (!buttons.length) {
+        onKeyDown: (props) => {
+          if (!cachedItems.length) {
             return false;
           }
           const event = props.event;
           if (event.key === "Escape") {
-            popup?.hide();
+            destroyRenderer();
             return true;
           }
           if (["ArrowDown", "Tab"].includes(event.key)) {
             event.preventDefault();
-            activeIndex = (activeIndex + 1) % buttons.length;
-            syncActiveState(activeIndex);
+            activeIndex = (activeIndex + 1) % cachedItems.length;
+            updateRenderer();
             return true;
           }
           if (event.key === "ArrowUp") {
             event.preventDefault();
-            activeIndex = (activeIndex - 1 + buttons.length) % buttons.length;
-            syncActiveState(activeIndex);
+            activeIndex = (activeIndex - 1 + cachedItems.length) % cachedItems.length;
+            updateRenderer();
             return true;
           }
           if (["Enter", "Return"].includes(event.key)) {
@@ -449,12 +396,190 @@ export function createMentionSuggestion(
           }
           return false;
         },
-        onExit() {
-          popup?.destroy();
-          popup = null;
-          buttons = [];
+        onExit: () => {
+          destroyRenderer();
         },
       };
     },
   };
+}
+
+interface MentionDropdownProps {
+  clientRect?: () => DOMRect | null;
+  query: string;
+  sections: DropdownSection[];
+  activeIndex: number;
+  totalResults: number;
+  onHighlight: (index: number) => void;
+  onSelect: (item: MentionEntity, index: number) => void;
+}
+
+function MentionDropdown({ clientRect, query, sections, activeIndex, totalResults, onHighlight, onSelect }: MentionDropdownProps) {
+  const { t } = useLanguage();
+  const [referenceRect, setReferenceRect] = useState<DOMRect | null>(clientRect ? clientRect() : null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateRect = () => {
+      if (clientRect) {
+        const rect = clientRect();
+        if (rect) {
+          setReferenceRect(rect);
+        }
+      }
+    };
+    updateRect();
+    window.addEventListener("scroll", updateRect, true);
+    window.addEventListener("resize", updateRect);
+    return () => {
+      window.removeEventListener("scroll", updateRect, true);
+      window.removeEventListener("resize", updateRect);
+    };
+  }, [clientRect]);
+
+  useEffect(() => {
+    const target = listRef.current?.querySelector<HTMLButtonElement>(`[data-index="${activeIndex}"]`);
+    target?.scrollIntoView({ block: "nearest" });
+  }, [activeIndex, sections]);
+
+  const hasResults = sections.length > 0;
+  const style: React.CSSProperties = referenceRect
+    ? {
+        position: "absolute",
+        top: referenceRect.bottom + window.scrollY + 8,
+        left: referenceRect.left + window.scrollX,
+        width: Math.max(referenceRect.width, 320),
+      }
+    : { position: "absolute", opacity: 0 };
+
+  let runningIndex = 0;
+
+  const content = hasResults ? (
+    <div ref={listRef} className="max-h-[360px] overflow-y-auto custom-scrollbar px-1">
+      {sections.map((section) => (
+        <motion.div
+          key={section.key}
+          layout
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ type: "spring", stiffness: 340, damping: 30 }}
+          className="pb-3"
+        >
+          <div className="sticky top-0 z-10 flex items-center gap-3 rounded-2xl bg-[var(--surface-raised)]/90 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.32em] text-[var(--text-tertiary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_8px_24px_rgba(15,23,42,0.12)] backdrop-blur">
+            {section.icon ? (
+              <span className="text-base" aria-hidden>
+                {section.icon}
+              </span>
+            ) : null}
+            <span className={section.accentClass}>{section.title}</span>
+            {section.badgeClass ? (
+              <span className={`ml-auto rounded-full border px-2 py-0.5 text-[9px] tracking-[0.18em] ${section.badgeClass}`}>
+                {section.folderName ?? section.title}
+              </span>
+            ) : (
+              <div className="h-px flex-1 bg-[var(--border-ui)]/60" />
+            )}
+          </div>
+          {section.description ? (
+            <p className="px-3 pb-1 text-[11px] text-[var(--text-secondary)]/80">
+              {section.description}
+            </p>
+          ) : null}
+          <div className="flex flex-col gap-1 pt-1">
+            {section.items.map((item) => {
+              const itemIndex = runningIndex;
+              runningIndex += 1;
+              const isActive = itemIndex === activeIndex;
+              const highlightedLabel = highlightText(item.label, query);
+              const highlightedDescription = item.description ? highlightText(item.description, query) : "";
+              const typeMeta = MENTION_TYPE_METADATA[item.type];
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-index={itemIndex}
+                  onMouseEnter={() => onHighlight(itemIndex)}
+                  onMouseDown={(event) => {
+                    event.preventDefault();
+                    onSelect(item, itemIndex);
+                  }}
+                  className={`group relative flex w-full items-center gap-3 rounded-2xl border px-3 py-2 text-left transition-colors focus-visible:outline-none ${
+                    isActive
+                      ? "border-[var(--border-ui)] bg-[var(--surface-state-active)] shadow-sm"
+                      : "border-transparent hover:bg-[var(--surface-state-hover)]"
+                  }`}
+                  aria-selected={isActive}
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--border-ui)] bg-[var(--background-app)] text-[var(--text-secondary)] shadow-inner">
+                    {item.imageUrl ? (
+                      <img src={item.imageUrl} alt="" className="h-full w-full rounded-2xl object-cover" />
+                    ) : (
+                      <span>{section.icon ?? typeMeta.icon}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="text-sm font-semibold text-[var(--text-primary)] truncate"
+                        dangerouslySetInnerHTML={{ __html: highlightedLabel }}
+                      />
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${typeMeta.badgeClass}`}>
+                        {typeMeta.label}
+                      </span>
+                      {section.chipClass ? (
+                        <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full border ${section.chipClass}`}>
+                          {section.folderName ?? section.title}
+                        </span>
+                      ) : null}
+                    </div>
+                    {highlightedDescription ? (
+                      <p className="text-xs text-[var(--text-secondary)]" dangerouslySetInnerHTML={{ __html: highlightedDescription }} />
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  ) : (
+    <div className="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">
+      {query ? t("mention.dropdown.noResults", { query }) || `No matches for @${query}` : t("mention.dropdown.start", { defaultValue: "Start typing to discover entries" })}
+    </div>
+  );
+
+  return (
+    <AnimatePresence>
+      {referenceRect ? (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.94 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          style={style}
+          className="z-[9999] min-w-[320px] max-w-[480px] rounded-3xl border border-[var(--border-ui)] bg-[var(--surface-raised)]/95 backdrop-blur-2xl shadow-[0_25px_80px_rgba(15,23,42,0.18)]"
+        >
+          <div className="flex items-center gap-3 border-b border-[var(--border-ui)]/60 px-4 pt-3 pb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--surface-state-hover)] text-base font-semibold text-[var(--text-primary)]">
+              @
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-[var(--text-tertiary)]">{t("mention.dropdown.title") || "Mentions"}</p>
+              <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{query || t("mention.dropdown.search") || "Search entries"}</p>
+            </div>
+          </div>
+          {content}
+          <div className="flex items-center justify-between border-t border-[var(--border-ui)]/60 px-4 py-2 text-[11px] text-[var(--text-tertiary)]">
+            <span>{t("mention.dropdown.results", { count: totalResults }) || `${totalResults} results`}</span>
+            <span className="flex items-center gap-2">
+              <kbd className="rounded-md border border-[var(--border-ui)] px-1.5 py-0.5 text-[10px]">↑↓</kbd>
+              {t("mention.dropdown.navigate") || "Navigate"}
+            </span>
+          </div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
 }

@@ -52,6 +52,12 @@ const translations: Translations = {
     "landing.mentions.dropdown.character": "Character",
     "landing.mentions.dropdown.location": "Location",
     "landing.mentions.dropdown.item": "Item",
+    "mention.dropdown.title": "Mentions",
+    "mention.dropdown.search": "Search entries",
+    "mention.dropdown.noResults": "No matches for",
+    "mention.dropdown.start": "Start typing to discover entries",
+    "mention.dropdown.results": "results",
+    "mention.dropdown.navigate": "Navigate",
     "landing.bento.fastSearch": "Fast Search",
     "landing.bento.cloudSync": "Cloud Sync",
     "landing.bento.secureStorage": "Secure Storage",
@@ -118,6 +124,9 @@ const translations: Translations = {
     "onboarding.step.account.email": "Email Address",
     "onboarding.step.account.password": "Password",
     "onboarding.step.account.password_hint": "Password should be at least 6 characters.",
+    "onboarding.step.account.acceptTerms": "I accept the Terms and Conditions",
+    "onboarding.step.account.newsletter": "I want to receive the newsletter",
+    "onboarding.step.account.termsLink": "Terms and Conditions",
     "onboarding.step.experience.title": "What's your writing experience?",
     "onboarding.step.experience.subtitle": "We'll tailor Aevon to your needs.",
     "onboarding.step.experience.beginner": "Beginner",
@@ -177,6 +186,7 @@ const translations: Translations = {
     "dashboard.nav.characters": "Characters",
     "dashboard.nav.locations": "Locations",
     "dashboard.nav.lore": "Lore",
+    "dashboard.nav.ideas": "Ideas",
     "dashboard.nav.items": "Items",
     "dashboard.nav.maps": "Maps",
     "dashboard.nav.relationships": "Relationships",
@@ -300,6 +310,8 @@ const translations: Translations = {
     "workspace.newElement.lore": "New Lore Entry",
     "workspace.newElement.item": "New Item",
     "workspace.newElement.diagram": "New Diagram",
+    "workspace.newElement.idea": "New Idea",
+    "workspace.newElement.map": "New Map",
     "workspace.category.place": "Place",
     "workspace.category.lore": "Lore",
     "char.mobileRoster": "Roster",
@@ -480,6 +492,22 @@ const translations: Translations = {
     "items.field.lore": "Attached Lore",
     "items.noSelection.title": "No Item Selected",
 
+    // Ideas
+    "ideas.title": "Ideas",
+    "ideas.searchPlaceholder": "Search ideas...",
+    "ideas.new": "New Idea",
+    "ideas.creating": "Creating...",
+    "ideas.created": "Idea recorded successfully.",
+    "ideas.deleted": "Idea deleted.",
+    "ideas.createError": "Unable to record idea.",
+    "ideas.deleteError": "Unable to delete idea.",
+    "ideas.noMatch": "No ideas match your search",
+    "ideas.noIdeas": "Capture your first quick idea to get started.",
+    "ideas.quickRecord": "Quick Record",
+    "ideas.typePlaceholder": "Type your idea here...",
+    "ideas.save": "Save Idea",
+    "ideas.saved": "Idea saved.",
+
     // Maps
     "maps.title": "Atlas",
     "maps.new": "New Map",
@@ -521,8 +549,7 @@ const translations: Translations = {
     "projects.updated": "Last updated",
     "projects.created": "Created",
     "projects.setActive": "Set active",
-    "projects.statusActive": "Current project",
-    "projects.statusInactive": "Inactivo",
+    "projects.statusInactive": "Inactive",
     "projects.dialog.title": "Create a new project",
     "projects.dialog.description": "Set the basics for this world now.",
     "projects.dialog.name": "Project name",
@@ -553,7 +580,14 @@ const translations: Translations = {
     "exp.format.docx.name": "Microsoft Word",
     "exp.option.smf.label": "Standard Manuscript Format",
     "exp.option.titlePage.label": "Include Title Page",
-    "exp.status.generating": "Generating manuscript...",
+    "exp.option.manuscript.label": "Include Manuscript",
+    "exp.option.toc.label": "Table of Contents",
+    "exp.option.characters.label": "Include Characters",
+    "exp.option.locations.label": "Include Locations",
+    "exp.option.lore.label": "Include Lore",
+    "exp.option.items.label": "Include Items",
+    "exp.option.ideas.label": "Include Ideas",
+    "exp.status.generating": "Generating project export...",
 
     // Settings
     "settings.title": "Workspace Settings",
@@ -583,7 +617,11 @@ const translations: Translations = {
     "settings.fields.project_title": "Project Title",
     "settings.fields.genre": "Genre",
     "settings.fields.project_description": "Project Description",
-    "settings.project.none": "No project"
+    "settings.project.none": "No project",
+    "workspace.offline": "You are currently offline. Changes will sync when reconnected.",
+    "workspace.syncing": "Syncing changes...",
+    "projects.statusActive": "Active",
+    "dashboard.overview.percent_completed": "{percent}% completed"
 
   },
   es: {
@@ -626,6 +664,12 @@ const translations: Translations = {
     "landing.mentions.dropdown.character": "Personaje",
     "landing.mentions.dropdown.location": "Ubicación",
     "landing.mentions.dropdown.item": "Objeto",
+    "mention.dropdown.title": "Menciones",
+    "mention.dropdown.search": "Buscar entradas",
+    "mention.dropdown.noResults": "Sin coincidencias para",
+    "mention.dropdown.start": "Empieza a escribir para descubrir entradas",
+    "mention.dropdown.results": "resultados",
+    "mention.dropdown.navigate": "Navegar",
     "landing.bento.fastSearch": "Búsqueda Rápida",
     "landing.bento.cloudSync": "Sincronización en la nube",
     "landing.bento.secureStorage": "Almacenamiento seguro",
@@ -692,6 +736,9 @@ const translations: Translations = {
     "onboarding.step.account.email": "Correo electrónico",
     "onboarding.step.account.password": "Contraseña",
     "onboarding.step.account.password_hint": "La contraseña debe tener al menos 6 caracteres.",
+    "onboarding.step.account.acceptTerms": "Acepto los Términos y Condiciones",
+    "onboarding.step.account.newsletter": "Quiero recibir el boletín informativo",
+    "onboarding.step.account.termsLink": "Términos y Condiciones",
     "onboarding.step.experience.title": "¿Cuál es tu experiencia escribiendo?",
     "onboarding.step.experience.subtitle": "Adaptaremos Aevon a tus necesidades.",
     "onboarding.step.experience.beginner": "Principiante",
@@ -751,6 +798,7 @@ const translations: Translations = {
     "dashboard.nav.characters": "Personajes",
     "dashboard.nav.locations": "Ubicaciones",
     "dashboard.nav.lore": "Trasfondo",
+    "dashboard.nav.ideas": "Ideas",
     "dashboard.nav.items": "Objetos",
     "dashboard.nav.maps": "Mapas",
     "dashboard.nav.relationships": "Relaciones",
@@ -1042,6 +1090,22 @@ const translations: Translations = {
     "items.field.effects": "Efectos y propiedades",
     "items.field.lore": "Lore adjunto",
     "items.noSelection.title": "Ningún objeto seleccionado",
+    
+    // Ideas
+    "ideas.title": "Ideas",
+    "ideas.searchPlaceholder": "Buscar ideas...",
+    "ideas.new": "Nueva Idea",
+    "ideas.creating": "Creando...",
+    "ideas.created": "Idea registrada con éxito.",
+    "ideas.deleted": "Idea eliminada.",
+    "ideas.createError": "No se pudo registrar la idea.",
+    "ideas.deleteError": "No se pudo eliminar la idea.",
+    "ideas.noMatch": "No hay ideas que coincidan con tu búsqueda",
+    "ideas.noIdeas": "Captura tu primera idea rápida para comenzar.",
+    "ideas.quickRecord": "Registro Rápido",
+    "ideas.typePlaceholder": "Escribe tu idea aquí...",
+    "ideas.save": "Guardar Idea",
+    "ideas.saved": "Idea guardada.",
 
     // Maps
     "maps.title": "Atlas",
@@ -1115,8 +1179,15 @@ const translations: Translations = {
     "exp.format.pdf.name": "Documento PDF",
     "exp.format.docx.name": "Microsoft Word",
     "exp.option.smf.label": "Formato estándar de manuscrito",
-    "exp.option.titlePage.label": "Incluir portada",
-    "exp.status.generating": "Generando manuscrito...",
+    "exp.option.titlePage.label": "Incluir página de título",
+    "exp.option.manuscript.label": "Incluir manuscrito",
+    "exp.option.toc.label": "Tabla de contenidos",
+    "exp.option.characters.label": "Incluir personajes",
+    "exp.option.locations.label": "Incluir ubicaciones",
+    "exp.option.lore.label": "Incluir lore",
+    "exp.option.items.label": "Incluir objetos",
+    "exp.option.ideas.label": "Incluir ideas",
+    "exp.status.generating": "Generando exportación del proyecto...",
 
     // Settings
     "settings.title": "Ajustes del espacio de trabajo",
@@ -1156,8 +1227,13 @@ const translations: Translations = {
     "workspace.newElement.lore": "Nueva Entrada de Tradición",
     "workspace.newElement.item": "Nuevo Objeto",
     "workspace.newElement.diagram": "Nuevo Diagrama",
+    "workspace.newElement.idea": "Nueva Idea",
+    "workspace.newElement.map": "Nuevo Mapa",
     "workspace.category.place": "Lugar",
-    "workspace.category.lore": "Tradición"
+    "workspace.category.lore": "Tradición",
+    "workspace.offline": "Estás desconectado. Los cambios se sincronizarán al reconectar.",
+    "workspace.syncing": "Sincronizando cambios...",
+    "dashboard.overview.percent_completed": "{percent}% completado"
 
   }
 };
@@ -1171,8 +1247,31 @@ interface LanguageContextProps {
 const LanguageContext = createContext<LanguageContextProps | undefined>(undefined);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("en");
   const mounted = useClientReady();
+
+  // Load language from localStorage on mount, or detect from browser
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = window.localStorage.getItem("aevon_language") as Language;
+      if (stored && (stored === "en" || stored === "es")) {
+        setLanguageState(stored);
+      } else {
+        // Auto-detect from browser language
+        const browserLang = navigator.language?.toLowerCase() || "";
+        if (browserLang.startsWith("es")) {
+          setLanguageState("es");
+        }
+      }
+    }
+  }, []);
+
+  const setLanguage = React.useCallback((lang: Language) => {
+    setLanguageState(lang);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("aevon_language", lang);
+    }
+  }, []);
 
   const t = (key: string): string => {
     return translations[language][key] || key;

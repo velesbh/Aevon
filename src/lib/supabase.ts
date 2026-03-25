@@ -17,3 +17,10 @@ export const supabase = hasSupabaseEnv
       },
     })
   : null;
+
+export function requireSupabase() {
+  if (!supabase) {
+    throw new Error("Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and a public key.");
+  }
+  return supabase;
+}

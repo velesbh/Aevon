@@ -11,7 +11,8 @@ import {
 } from "react";
 import { supabase } from "@/lib/supabase";
 import { useTranslation } from "@/lib/i18n";
-import { processQueue, setSyncing } from "@/lib/sync-manager";
+import { processQueue, setSyncing, setOffline, onSyncStateChange } from "@/lib/sync-manager";
+import { WifiOff, RefreshCw } from "lucide-react";
 import {
   buildCharacterAttributes,
   createChapter,
@@ -59,6 +60,8 @@ interface DashboardWorkspaceContextValue {
   workspace: WorkspaceSnapshot | null;
   loading: boolean;
   error: string | null;
+  isOffline: boolean;
+  isSyncing: boolean;
   refreshWorkspace: (projectId?: string, options?: { silent?: boolean }) => Promise<void>;
   switchProject: (projectId: string) => Promise<void>;
   projects: ProjectRecord[];
@@ -86,11 +89,14 @@ interface DashboardWorkspaceContextValue {
   removeCharacterImageRecord: (id: string) => Promise<WorldElementRecord>;
   createProjectRecord: (title: string, genre?: string | null) => Promise<ProjectRecord>;
   saveActiveProjectRecord: (
-    updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre">>,
+    updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre" | "scratchpad" | "settings">>,
   ) => Promise<ProjectRecord>;
   saveProfileRecord: (
     updates: Partial<Pick<ProfileRecord, "name" | "language" | "experience_level" | "genre" | "project_name">>,
   ) => Promise<ProfileRecord>;
+  createQuickIdea: (text: string) => Promise<WorldElementRecord>;
+  reorderChapters: (chapterIds: string[]) => Promise<void>;
+  reorderWorldElements: (elementIds: string[]) => Promise<void>;
 }
 
 const DashboardWorkspaceContext = createContext<DashboardWorkspaceContextValue | null>(null);
@@ -128,6 +134,8 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(typeof window !== "undefined" ? !navigator.onLine : false);
+  const [isSyncing, setIsSyncingState] = useState(false);
 
   const refreshWorkspace = useCallback(
     async (projectId?: string, options?: { silent?: boolean }) => {
@@ -179,10 +187,15 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      if ((event as string) === 'TOKEN_REFRESH_FAILED') {
+      // Ignore silent token refreshes and initial session - these cause unwanted reloads
+      if (
+        (event as string) === 'TOKEN_REFRESH_FAILED' ||
+        (event as string) === 'TOKEN_REFRESHED' ||
+        (event as string) === 'INITIAL_SESSION'
+      ) {
         return;
       }
-      
+
       if (!session?.user) {
         setWorkspace(null);
         setSelectedCharacterId(null);
@@ -190,8 +203,11 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
         return;
       }
 
-      const storedProjectId = typeof window !== "undefined" ? window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY) : null;
-      void refreshWorkspace(storedProjectId ?? undefined);
+      // Only refresh on actual SIGNED_IN or USER_UPDATED if we don't have a workspace
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && !workspace) {
+        const storedProjectId = typeof window !== "undefined" ? window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY) : null;
+        void refreshWorkspace(storedProjectId ?? undefined, { silent: true });
+      }
     });
 
     return () => {
@@ -199,10 +215,28 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
     };
   }, [refreshWorkspace]);
 
+
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    window.addEventListener("online", processQueue);
+    const handleOnline = () => {
+      setOffline(false);
+      setIsOffline(false);
+      void processQueue();
+    };
+
+    const handleOffline = () => {
+      setOffline(true);
+      setIsOffline(true);
+    };
+
+    const cleanupSyncListener = onSyncStateChange((syncing, offline) => {
+      setIsSyncingState(syncing);
+      setIsOffline(offline);
+    });
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
     
     // Also try processing when component mounts in case we came online while it was unmounted
     if (navigator.onLine) {
@@ -210,7 +244,9 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
     }
 
     return () => {
-      window.removeEventListener("online", processQueue);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      cleanupSyncListener();
     };
   }, []);
 
@@ -241,14 +277,14 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       setSyncing(true);
       try {
         const chapter = await createChapter(workspace.activeProject.id, title);
-        setWorkspace((current) =>
-          current
-            ? {
-                ...current,
-                chapters: sortChapters([...current.chapters, chapter]),
-              }
-            : current,
-        );
+        setWorkspace((current) => {
+          if (!current) return current;
+          if (current.chapters.some(c => c.id === chapter.id)) return current;
+          return {
+            ...current,
+            chapters: sortChapters([...current.chapters, chapter]),
+          };
+        });
 
         return chapter;
       } finally {
@@ -304,15 +340,15 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       try {
         const uploadedFile = await uploadWorkspaceFile(workspace?.activeProject?.id ?? null, file);
 
-        setWorkspace((current) =>
-          current
-            ? {
-                ...current,
-                files: sortFiles([uploadedFile, ...current.files]),
-                profile: applyStorageDelta(current.profile, uploadedFile.file_size),
-              }
-            : current,
-        );
+        setWorkspace((current) => {
+          if (!current) return current;
+          if (current.files.some(f => f.id === uploadedFile.id)) return current;
+          return {
+            ...current,
+            files: sortFiles([uploadedFile, ...current.files]),
+            profile: applyStorageDelta(current.profile, uploadedFile.file_size),
+          };
+        });
 
         return uploadedFile;
       } finally {
@@ -398,6 +434,8 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           lore: t("workspace.newElement.lore"),
           item: t("workspace.newElement.item"),
           lore_diagram: t("workspace.newElement.diagram"),
+          idea: t("workspace.newElement.idea"),
+          map: t("workspace.newElement.map"),
         };
 
         const categoryMap: Partial<Record<WorldElementType, string>> = {
@@ -409,19 +447,45 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           name: nameMap[type],
           category: categoryMap[type],
         });
-        setWorkspace((current) =>
-          current
-            ? {
-                ...current,
-                worldElements: [createdElement, ...current.worldElements],
-              }
-            : current,
-        );
+        setWorkspace((current) => {
+          if (!current) return current;
+          if (current.worldElements.some(e => e.id === createdElement.id)) return current;
+          return {
+            ...current,
+            worldElements: [createdElement, ...current.worldElements],
+          };
+        });
 
         if (type === "character") {
           setSelectedCharacterId(createdElement.id);
         }
 
+        return createdElement;
+      } finally {
+        setSyncing(false);
+      }
+    },
+    [workspace?.activeProject?.id, t],
+  );
+
+  const createQuickIdea = useCallback(
+    async (text: string) => {
+      if (!workspace?.activeProject?.id) {
+        throw new Error("No active project available.");
+      }
+      setSyncing(true);
+      try {
+        const createdElement = await createWorldElement(workspace.activeProject.id, "idea", {
+          name: `Quick Idea - ${new Date().toLocaleDateString()}`,
+          description: text,
+        });
+        setWorkspace((current) => {
+          if (!current || current.worldElements.some(e => e.id === createdElement.id)) return current;
+          return {
+            ...current,
+            worldElements: [createdElement, ...current.worldElements],
+          };
+        });
         return createdElement;
       } finally {
         setSyncing(false);
@@ -616,24 +680,29 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
 
   const createProjectRecord = useCallback(
     async (title: string, genre?: string | null) => {
-      const project = await createProject(title, genre);
+      setSyncing(true);
+      try {
+        const project = await createProject(title, genre);
 
-      setWorkspace((current) =>
-        current
-          ? {
-              ...current,
-              projects: sortProjects([...current.projects, project]),
-            }
-          : current,
-      );
+        setWorkspace((current) => {
+          if (!current) return current;
+          if (current.projects.some(p => p.id === project.id)) return current;
+          return {
+            ...current,
+            projects: sortProjects([...current.projects, project]),
+          };
+        });
 
-      return project;
+        return project;
+      } finally {
+        setSyncing(false);
+      }
     },
     [],
   );
 
   const saveActiveProjectRecord = useCallback(
-    async (updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre">>) => {
+    async (updates: Partial<Pick<ProjectRecord, "title" | "description" | "genre" | "scratchpad" | "settings">>) => {
       if (!workspace?.activeProject?.id) {
         throw new Error("No active project available.");
       }
@@ -655,6 +724,67 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       return updatedProject;
     },
     [workspace?.activeProject?.id],
+  );
+
+  const reorderChapters = useCallback(
+    async (chapterIds: string[]) => {
+      setSyncing(true);
+      try {
+        await import("@/lib/workspace").then(m => m.reorderChapters(chapterIds));
+        setWorkspace((current) => {
+          if (!current) return current;
+          
+          const newChapters = [...current.chapters];
+          newChapters.sort((a, b) => {
+            const indexA = chapterIds.indexOf(a.id);
+            const indexB = chapterIds.indexOf(b.id);
+            if (indexA === -1 || indexB === -1) return 0;
+            return indexA - indexB;
+          });
+          
+          // Also update order_index
+          newChapters.forEach((chapter) => {
+            const idx = chapterIds.indexOf(chapter.id);
+            if (idx !== -1) {
+              chapter.order_index = idx;
+            }
+          });
+
+          return { ...current, chapters: newChapters };
+        });
+      } finally {
+        setSyncing(false);
+      }
+    },
+    []
+  );
+
+  const reorderWorldElements = useCallback(
+    async (elementIds: string[]) => {
+      setSyncing(true);
+      try {
+        await import("@/lib/workspace").then(m => m.reorderWorldElements(elementIds));
+        setWorkspace((current) => {
+          if (!current) return current;
+          
+          const newElements = [...current.worldElements];
+          newElements.forEach(el => {
+            const idx = elementIds.indexOf(el.id);
+            if (idx !== -1) {
+              el.attributes = {
+                ...(typeof el.attributes === 'object' && el.attributes !== null ? el.attributes : {}),
+                order_index: idx
+              };
+            }
+          });
+
+          return { ...current, worldElements: newElements };
+        });
+      } finally {
+        setSyncing(false);
+      }
+    },
+    []
   );
 
   const saveProfileRecord = useCallback(
@@ -682,6 +812,8 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       workspace,
       loading,
       error,
+      isOffline,
+      isSyncing,
       refreshWorkspace,
       switchProject,
       projects: workspace?.projects ?? [],
@@ -707,11 +839,16 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       createProjectRecord,
       saveActiveProjectRecord,
       saveProfileRecord,
+      createQuickIdea,
+      reorderChapters,
+      reorderWorldElements,
     }),
     [
       workspace,
       loading,
       error,
+      isOffline,
+      isSyncing,
       refreshWorkspace,
       switchProject,
       chapters,
@@ -732,11 +869,16 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
       createProjectRecord,
       saveActiveProjectRecord,
       saveProfileRecord,
+      createQuickIdea,
+      reorderChapters,
+      reorderWorldElements,
     ],
   );
 
   return (
-    <DashboardWorkspaceContext.Provider value={value}>{children}</DashboardWorkspaceContext.Provider>
+    <DashboardWorkspaceContext.Provider value={value}>
+      {children}
+    </DashboardWorkspaceContext.Provider>
   );
 }
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { BookOpen, Clock, FileText, Loader2, Map as MapIcon, ChevronRight, Target, PenTool } from "lucide-react";
+import { BookOpen, Clock, FileText, Loader2, Map as MapIcon, ChevronRight, Target, PenTool, Users, ScrollText } from "lucide-react";
 import { useDashboardWorkspace } from "@/components/dashboard/workspace-provider";
 import { motion } from "framer-motion";
 import { useLanguage } from "@/lib/i18n";
+import { QuickScratchpad } from "@/components/dashboard/quick-scratchpad";
 import Grid from "@mui/material/Grid";
 import {
-  AppBar,
-  Toolbar,
   Typography,
   Box,
   Stack,
@@ -17,7 +16,6 @@ import {
   Chip,
   Paper,
   Divider,
-  TextField,
   CircularProgress,
 } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
@@ -36,18 +34,24 @@ const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
+    transition: { staggerChildren: 0.07 },
+  },
 };
 
 const itemVariants: import("framer-motion").Variants = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } }
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 400, damping: 30 } },
 };
 
-import { QuickScratchpad } from "@/components/dashboard/quick-scratchpad";
+function getTypeIcon(type: string) {
+  switch (type.toLowerCase()) {
+    case "chapter": return FileText;
+    case "character": return Users;
+    case "location": return MapIcon;
+    case "lore": return ScrollText;
+    default: return FileText;
+  }
+}
 
 export default function DashboardOverview() {
   const { error, loading, workspace } = useDashboardWorkspace();
@@ -56,20 +60,20 @@ export default function DashboardOverview() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", bgcolor: "background.default" }}>
-        <CircularProgress color="success" />
+      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+        <CircularProgress sx={{ color: "var(--color-primary, #10b981)" }} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ height: "100%", bgcolor: "background.default", display: "flex", alignItems: "center", justifyContent: "center", p: 4 }}>
-        <Paper elevation={3} sx={{ maxWidth: 520, p: 4, borderRadius: 3, border: "1px solid", borderColor: "error.light" }}>
+      <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", p: 4 }}>
+        <Paper elevation={0} sx={{ maxWidth: 520, p: 4, borderRadius: 3, border: "1px solid", borderColor: "error.light" }}>
           <Typography variant="h6" fontWeight={700} color="error.main">
             {t("dashboard.overview.error_loading")}
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1.5 }} color="error.dark">
+          <Typography variant="body2" sx={{ mt: 1.5 }} color="text.secondary">
             {error}
           </Typography>
         </Paper>
@@ -79,8 +83,8 @@ export default function DashboardOverview() {
 
   if (!workspace || !workspace.activeProject) {
     return (
-      <Box sx={{ height: "100%", bgcolor: "background.default", display: "flex", alignItems: "center", justifyContent: "center", p: 4 }}>
-        <Paper elevation={1} sx={{ maxWidth: 560, p: 5, borderRadius: 4 }}>
+      <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", p: 4 }}>
+        <Paper elevation={0} sx={{ maxWidth: 560, p: 5, borderRadius: 4, border: "1px solid", borderColor: "divider" }}>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             {t("dashboard.overview.no_project")}
           </Typography>
@@ -108,161 +112,168 @@ export default function DashboardOverview() {
     })),
   ]
     .sort((left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime())
-    .slice(0, 5);
+    .slice(0, 6);
 
   const displayName = workspace.profile?.name ?? workspace.user.email ?? t("dashboard.writer");
   const projectGenre = workspace.activeProject.genre ?? workspace.profile?.genre ?? t("dashboard.uncategorized");
 
+  const stats = [
+    {
+      label: t("dash.totalWords"),
+      value: totalWords.toLocaleString(),
+      icon: BookOpen,
+      sub: t("dashboard.overview.chapters_count")
+        .replace("{count}", workspace.chapters.length.toString())
+        .replace("{plural}", workspace.chapters.length === 1 ? "" : "s"),
+    },
+    {
+      label: t("dash.activeManuscripts"),
+      value: workspace.projects.length.toString(),
+      icon: FileText,
+      sub: workspace.activeProject.title,
+    },
+    {
+      label: t("dash.worldEntities"),
+      value: workspace.worldElements.length.toString(),
+      icon: MapIcon,
+      sub: t("dashboard.overview.cast_locations_lore"),
+    },
+    {
+      label: t("dashboard.overview.daily_goal"),
+      value: "1,240 / 2k",
+      icon: Target,
+      sub: t("dashboard.overview.percent_completed").replace("{percent}", "62"),
+    },
+  ];
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.default", overflowY: "auto" }}>
-      <Box sx={{ px: { xs: 3, md: 5 }, pt: { xs: 3, md: 5 }, pb: 2, width: "100%", maxWidth: 1400, mx: "auto" }}>
-        <Typography variant="h4" fontWeight={800} color="text.primary">
-          {t("dash.welcome")}, {displayName}
-        </Typography>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+      <Box sx={{ px: { xs: 2, md: 4 }, pt: { xs: 2, md: 4 }, pb: 0, width: "100%", maxWidth: 1200, mx: "auto" }}>
+        {/* Welcome + Project Hero */}
+        <Stack spacing={0.5} sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" fontWeight={600}>
+            {t("dash.welcome")}, {displayName}
+          </Typography>
+          <Stack direction={{ xs: "column", sm: "row" }} alignItems={{ sm: "center" }} justifyContent="space-between" spacing={2}>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Typography variant="h4" fontWeight={900} sx={{ lineHeight: 1.1 }}>
+                {workspace.activeProject.title}
+              </Typography>
+              <Chip
+                size="small"
+                label={projectGenre}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.65rem",
+                  bgcolor: "rgba(16, 185, 129, 0.1)",
+                  color: "var(--color-primary, #10b981)",
+                  height: 22,
+                }}
+              />
+            </Stack>
+            <Button
+              component="a"
+              href="/dashboard/manuscript/"
+              variant="contained"
+              size="small"
+              startIcon={<PenTool size={15} />}
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                fontWeight: 700,
+                textTransform: "none",
+                bgcolor: "var(--color-primary, #10b981)",
+                "&:hover": { bgcolor: "var(--color-primary-dark, #059669)" },
+              }}
+            >
+              {t("dashboard.overview.continue_writing")}
+            </Button>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5 }}>
+            <Clock size={12} style={{ opacity: 0.5 }} />
+            <Typography variant="caption" color="text.tertiary" fontWeight={500}>
+              {t("dashboard.overview.last_edited").replace("{time}", formatRelativeTime(workspace.activeProject.updated_at, t))}
+            </Typography>
+          </Stack>
+        </Stack>
       </Box>
 
-      <Box sx={{ flexGrow: 1 }}>
-        <Stack spacing={4} sx={{ px: { xs: 3, md: 5 }, pb: 10, width: "100%", maxWidth: 1400, mx: "auto" }}>
+      <Box sx={{ flexGrow: 1, px: { xs: 2, md: 4 }, pb: 10, width: "100%", maxWidth: 1200, mx: "auto" }}>
+        <Stack spacing={3}>
+          {/* Stats Row */}
           <Grid
             container
-            spacing={{ xs: 2, md: 3 }}
+            spacing={2}
             component={motion.div}
             variants={containerVariants}
             initial="hidden"
             animate="show"
           >
-            {[
-              {
-                name: t("dash.totalWords"),
-                stat: totalWords.toLocaleString(),
-                icon: BookOpen,
-                change: t("dashboard.overview.chapters_count")
-                  .replace("{count}", workspace.chapters.length.toString())
-                  .replace("{plural}", workspace.chapters.length === 1 ? "" : "s"),
-              },
-              {
-                name: t("dash.activeManuscripts"),
-                stat: workspace.projects.length.toString(),
-                icon: FileText,
-                change: workspace.activeProject.title,
-              },
-              {
-                name: t("dash.worldEntities"),
-                stat: workspace.worldElements.length.toString(),
-                icon: MapIcon,
-                change: t("dashboard.overview.cast_locations_lore"),
-              },
-              {
-                name: t("dashboard.overview.daily_goal"),
-                stat: "1,240 / 2k",
-                icon: Target,
-                change: t("dashboard.overview.percent_completed").replace("{percent}", "62"),
-              },
-            ].map((item) => (
-              <Grid key={item.name} size={{ xs: 12, sm: 6, lg: 3 }} component={motion.div} variants={itemVariants}>
-                <Card
-                  elevation={0}
+            {stats.map((item) => (
+              <Grid key={item.label} size={{ xs: 6, md: 3 }} component={motion.div} variants={itemVariants}>
+                <Box
                   sx={{
-                    p: { xs: 3, md: 4 },
+                    p: 2.5,
                     borderRadius: 3,
                     border: "1px solid",
                     borderColor: "divider",
-                    height: "100%",
-                    position: "relative",
-                    overflow: "hidden",
                     bgcolor: "background.paper",
-                    boxShadow: "0px 2px 8px rgba(0,0,0,0.04)",
-                    transition: "box-shadow 0.3s ease, transform 0.3s ease",
-                    "&:hover": {
-                      boxShadow: "0px 10px 30px rgba(0,0,0,0.08)",
-                      transform: "translateY(-2px)",
-                    },
+                    transition: "all 0.2s ease",
+                    "&:hover": { borderColor: "text.disabled" },
                   }}
                 >
-                  <Box sx={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-                    <Box sx={{ position: "absolute", top: -32, right: -32, width: 140, height: 140, borderRadius: "50%", bgcolor: alpha(theme.palette.success.main, 0.08) }} />
-                  </Box>
-                  <CardContent sx={{ position: "relative", p: 0, height: "100%" }}>
-                    <Stack spacing={3} sx={{ height: "100%" }}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between">
-                        <Typography variant="overline" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 2 }}>
-                          {item.name}
-                        </Typography>
-                        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: alpha(theme.palette.success.main, 0.15), color: "success.main" }}>
-                          <item.icon size={20} />
-                        </Box>
-                      </Stack>
-                      <Typography variant="h4" fontWeight={900} color="text.primary">
-                        {item.stat}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {item.change}
-                      </Typography>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1, fontSize: "0.65rem" }}>
+                      {item.label}
+                    </Typography>
+                    <Box sx={{ p: 0.75, borderRadius: 1.5, bgcolor: "rgba(16, 185, 129, 0.1)", color: "var(--color-primary, #10b981)", display: "flex" }}>
+                      <item.icon size={14} />
+                    </Box>
+                  </Stack>
+                  <Typography variant="h5" fontWeight={900} sx={{ mb: 0.5, lineHeight: 1 }}>
+                    {item.value}
+                  </Typography>
+                  <Typography variant="caption" color="text.tertiary" sx={{ fontSize: "0.7rem" }}>
+                    {item.sub}
+                  </Typography>
+                </Box>
               </Grid>
             ))}
           </Grid>
 
-          <Grid container spacing={{ xs: 3, md: 4 }}>
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <Stack spacing={{ xs: 3, md: 4 }}>
-                <Paper
-                  elevation={1}
-                  sx={{
-                    position: "relative",
-                    borderRadius: 4,
-                    p: { xs: 3, md: 5 },
-                    overflow: "hidden",
-                    backgroundImage: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.08)}, transparent)`,
-                  }}
-                >
-                  <Stack direction={{ xs: "column", md: "row" }} alignItems={{ xs: "flex-start", md: "flex-end" }} spacing={4} justifyContent="space-between">
-                    <Stack spacing={2} maxWidth={720}>
-                      <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
-                        <Chip size="small" label={projectGenre} color="success" variant="outlined" sx={{ fontWeight: 700, letterSpacing: 1 }} />
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Clock size={14} />
-                          <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ letterSpacing: 1 }}>
-                            {t("dashboard.overview.last_edited").replace("{time}", formatRelativeTime(workspace.activeProject.updated_at, t))}
-                          </Typography>
-                        </Stack>
-                      </Stack>
-                      <Typography variant="h3" sx={{ fontWeight: 900, lineHeight: 1.1 }}>
-                        {workspace.activeProject.title}
-                      </Typography>
-                      <Typography variant="body1" color="text.secondary">
-                        {workspace.activeProject.description ?? t("dash.liveProject")}
-                      </Typography>
-                    </Stack>
-                      <Button
-                      component="a"
-                      href="/dashboard/manuscript/"
-                      variant="contained"
-                      color="success"
-                      size="large"
-                      startIcon={<PenTool size={18} />}
-                      sx={{ borderRadius: 999, px: 4, fontWeight: 700, boxShadow: "0 12px 24px rgba(16,185,129,0.25)" }}
-                    >
-                      {t("dashboard.overview.continue_writing")}
-                    </Button>
-                  </Stack>
-                </Paper>
+          {/* Main Content Grid */}
+          <Grid container spacing={3}>
+            {/* Left Column - Activity */}
+            <Grid size={{ xs: 12, lg: 7 }}>
+              <Box
+                sx={{
+                  borderRadius: 3,
+                  border: "1px solid",
+                  borderColor: "divider",
+                  bgcolor: "background.paper",
+                  overflow: "hidden",
+                }}
+              >
+                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+                  <Typography variant="subtitle2" fontWeight={700}>
+                    {t("dash.recentActivity")}
+                  </Typography>
+                  <Button
+                    component="a"
+                    href="/dashboard/manuscript/"
+                    size="small"
+                    endIcon={<ChevronRight size={14} />}
+                    sx={{ fontWeight: 600, textTransform: "none", color: "var(--color-primary, #10b981)", fontSize: "0.75rem" }}
+                  >
+                    {t("dash.viewAll")}
+                  </Button>
+                </Stack>
 
-                <Paper elevation={1} sx={{ borderRadius: 4, p: { xs: 3, md: 4 } }}>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ pb: 2, borderBottom: "1px solid", borderColor: "divider", mb: 3 }}>
-                    <Typography variant="h6" fontWeight={700}>
-                      {t("dash.recentActivity")}
-                    </Typography>
-                    <Button component="a" href="/dashboard/manuscript/" size="small" color="success" endIcon={<ChevronRight size={16} />} sx={{ fontWeight: 700 }}>
-                      {t("dash.viewAll")}
-                    </Button>
-                  </Stack>
-
-                  {recentItems.length > 0 ? (
-                    <Stack divider={<Divider flexItem />}>
-                      {recentItems.map((item) => (
+                {recentItems.length > 0 ? (
+                  <Stack divider={<Divider />}>
+                    {recentItems.map((item) => {
+                      const Icon = getTypeIcon(item.type);
+                      return (
                         <Box
                           key={item.id}
                           component="a"
@@ -273,95 +284,106 @@ export default function DashboardOverview() {
                             justifyContent: "space-between",
                             gap: 2,
                             textDecoration: "none",
-                            py: 2,
+                            px: 3,
+                            py: 1.75,
                             color: "inherit",
-                            transition: "background-color 0.2s ease",
+                            transition: "background-color 0.15s ease",
                             "&:hover": { bgcolor: "action.hover" },
                           }}
                         >
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, border: "1px solid", borderColor: "divider", color: "text.secondary" }}>
-                              <FileText size={20} />
-                            </Paper>
-                            <Box>
-                              <Typography variant="subtitle1" fontWeight={700} sx={{ color: "text.primary" }}>
+                          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+                            <Box sx={{ p: 1, borderRadius: 2, bgcolor: "action.hover", color: "text.secondary", display: "flex", flexShrink: 0 }}>
+                              <Icon size={16} />
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography variant="body2" fontWeight={600} noWrap>
                                 {item.title}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
+                              <Typography variant="caption" color="text.tertiary" sx={{ fontSize: "0.675rem" }}>
                                 {item.type}
                               </Typography>
                             </Box>
                           </Stack>
-                          <Chip
-                            label={formatRelativeTime(item.updated_at, t)}
-                            size="small"
-                            variant="outlined"
-                            sx={{ fontWeight: 600, letterSpacing: 1 }}
-                          />
+                          <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, fontSize: "0.675rem" }}>
+                            {formatRelativeTime(item.updated_at, t)}
+                          </Typography>
                         </Box>
-                      ))}
-                    </Stack>
-                  ) : (
-                    <Stack spacing={2} alignItems="center" justifyContent="center" sx={{ py: 6 }}>
-                      <Clock size={40} color={theme.palette.text.secondary} />
-                      <Typography variant="body1" color="text.secondary">
-                        {t("dash.noActivity")}
-                      </Typography>
-                    </Stack>
-                  )}
-                </Paper>
-              </Stack>
+                      );
+                    })}
+                  </Stack>
+                ) : (
+                  <Stack spacing={1.5} alignItems="center" justifyContent="center" sx={{ py: 8 }}>
+                    <Clock size={32} style={{ opacity: 0.3 }} />
+                    <Typography variant="body2" color="text.secondary">
+                      {t("dash.noActivity")}
+                    </Typography>
+                  </Stack>
+                )}
+              </Box>
             </Grid>
 
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Stack spacing={{ xs: 3, md: 4 }}>
-                <Paper elevation={1} sx={{ borderRadius: 4, height: 300, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                  <QuickScratchpad project={workspace.activeProject} />
-                </Paper>
-
-                <Paper
-                  elevation={1}
+            {/* Right Column - Scratchpad + Progress */}
+            <Grid size={{ xs: 12, lg: 5 }}>
+              <Stack spacing={3}>
+                <Box
                   sx={{
-                    borderRadius: 4,
-                    p: 4,
-                    textAlign: "center",
-                    backgroundImage: `linear-gradient(135deg, ${alpha(theme.palette.background.paper, 0.9)}, ${alpha(theme.palette.success.light, 0.2)})`,
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                    height: 280,
+                    display: "flex",
+                    flexDirection: "column",
+                    overflow: "hidden",
                   }}
                 >
-                  <Typography variant="overline" fontWeight={700} sx={{ letterSpacing: 2 }}>
+                  <QuickScratchpad project={workspace.activeProject} />
+                </Box>
+
+                <Box
+                  sx={{
+                    borderRadius: 3,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    bgcolor: "background.paper",
+                    p: 3,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1.5, fontSize: "0.65rem" }}>
                     {t("dashboard.overview.daily_progress")}
                   </Typography>
-                  <Box sx={{ position: "relative", display: "inline-flex", mt: 4, mb: 3 }}>
-                    <svg width={160} height={160} style={{ transform: "rotate(-90deg)" }}>
-                      <circle cx="80" cy="80" r="64" fill="none" stroke={alpha(theme.palette.divider, 0.6)} strokeWidth={12} />
+                  <Box sx={{ position: "relative", display: "inline-flex", mt: 3, mb: 2 }}>
+                    <svg width={130} height={130} style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="65" cy="65" r="52" fill="none" stroke={alpha(theme.palette.divider, 0.4)} strokeWidth={10} />
                       <circle
-                        cx="80"
-                        cy="80"
-                        r="64"
+                        cx="65"
+                        cy="65"
+                        r="52"
                         fill="none"
-                        stroke={theme.palette.success.main}
-                        strokeWidth={12}
-                        strokeDasharray={402}
-                        strokeDashoffset={154}
+                        stroke="var(--color-primary, #10b981)"
+                        strokeWidth={10}
+                        strokeDasharray={327}
+                        strokeDashoffset={124}
                         strokeLinecap="round"
                       />
                     </svg>
-                    <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }} spacing={0.5}>
-                      <Typography variant="h4" fontWeight={900}>
+                    <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }} spacing={0}>
+                      <Typography variant="h5" fontWeight={900}>
                         62%
                       </Typography>
-                      <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ letterSpacing: 2 }}>
+                      <Typography variant="caption" fontWeight={600} color="text.disabled" sx={{ fontSize: "0.6rem", letterSpacing: 1.5, textTransform: "uppercase" }}>
                         {t("dashboard.overview.complete")}
                       </Typography>
                     </Stack>
                   </Box>
-                  <Typography variant="subtitle1" fontWeight={700}>
+                  <Typography variant="body2" fontWeight={700}>
                     1,240 {t("dashboard.overview.words_written")}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary">
                     760 {t("dashboard.overview.words_to_go")}
                   </Typography>
-                </Paper>
+                </Box>
               </Stack>
             </Grid>
           </Grid>
@@ -370,6 +392,3 @@ export default function DashboardOverview() {
     </Box>
   );
 }
-
-
-

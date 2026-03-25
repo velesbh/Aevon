@@ -2,19 +2,19 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --color-brand-50: #ecfdf5;
-  --color-brand-100: #d1fae5;
-  --color-brand-200: #a7f3d0;
-  --color-brand-300: #6ee7b7;
-  --color-brand-400: #34d399;
-  --color-brand-500: #10b981;
-  --color-brand-600: #059669;
-  --color-brand-700: #047857;
-  --color-brand-800: #065f46;
-  --color-brand-900: #064e3b;
-  --color-brand-950: #022c22;
+  --color-brand-50: #e6f4ea;
+  --color-brand-100: #cce9d5;
+  --color-brand-200: #99d3aa;
+  --color-brand-300: #66bc80;
+  --color-brand-400: #33a655;
+  --color-brand-500: #188038;
+  --color-brand-600: #13662d;
+  --color-brand-700: #0f4d22;
+  --color-brand-800: #0a3316;
+  --color-brand-900: #051a0b;
+  --color-brand-950: #020d06;
 
-  /* CSS variables for theme-dependent colors */
+  /* Bridge CSS variables for tailwind tokens */
   --color-background-app: var(--background-app);
   --color-background-surface: var(--background-surface);
   --color-background-surface-hover: var(--background-surface-hover);
@@ -23,50 +23,196 @@
   --color-text-tertiary: var(--text-tertiary);
   --color-border-ui: var(--border-ui);
   --color-border-ui-hover: var(--border-ui-hover);
-  --color-error: #ef4444;
+  --color-error: #e5484d;
 
-  --font-sans: "Inter", "Geist", sans-serif;
-  --font-serif: "Merriweather", "Literata", serif;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "Inter", "Roboto", "SF Pro Display", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Literata", "Georgia", serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --shadow-sm: var(--elevation-1);
+  --shadow: var(--elevation-1);
+  --shadow-md: var(--elevation-2);
+  --shadow-lg: var(--elevation-3);
 }
 
 @layer base {
   :root {
-    --background-app: #fafafa;
-    --background-surface: #ffffff;
-    --background-surface-hover: #f4f4f5;
-    --text-primary: #09090b;
-    --text-secondary: #52525b;
-    --text-tertiary: #a1a1aa;
-    --border-ui: #e4e4e7;
-    --border-ui-hover: #d4d4d8;
+    color-scheme: light;
+
+    --primary: #188038;
+    --primary-strong: #115b27;
+    --primary-container: #e6f4ea;
+    --on-primary: #ffffff;
+    --on-primary-container: #0d3d1d;
+
+    --secondary: #546070;
+    --secondary-container: #dce2ec;
+    --on-secondary: #ffffff;
+
+    --surface: #fafbfc;
+    --surface-container-low: #f4f5f7;
+    --surface-container: #edeef2;
+    --surface-container-high: #e4e6ec;
+    --surface-container-highest: #d8dbe5;
+    --surface-state-hover: rgba(15, 23, 42, 0.04);
+    --surface-state-active: rgba(15, 23, 42, 0.08);
+    --surface-variant: #e1e3ef;
+
+    --outline: #c5c9d8;
+    --outline-variant: #dfe2ee;
+    --border-strong: #b3b9cd;
+
+    --background-app: var(--surface);
+    --background-surface: var(--surface-container-low);
+    --background-surface-hover: var(--surface-container);
+    --surface-raised: var(--surface-container);
+
+    --text-primary: #0f1219;
+    --text-secondary: #4b5163;
+    --text-tertiary: #7a8092;
+
+    --border-ui: var(--outline);
+    --border-ui-hover: #b2b7c8;
+
+    --neutral-0: #ffffff;
+    --neutral-5: #f7f7fb;
+    --neutral-10: #f0f1f6;
+    --neutral-20: #e3e6ef;
+    --neutral-30: #cfd3e1;
+    --neutral-40: #b6bbcd;
+    --neutral-60: #848aa1;
+    --neutral-80: #555b70;
+    --neutral-90: #343949;
+    --neutral-100: #171a26;
+
+    --surface-tint: var(--primary);
+    --state-layer-primary: rgba(24, 128, 56, 0.14);
+    --state-layer-primary-strong: rgba(24, 128, 56, 0.22);
+    --state-layer-neutral: rgba(15, 22, 36, 0.06);
+    --state-layer-neutral-strong: rgba(15, 22, 36, 0.12);
+
+    --focus-ring: 0 0 0 1px rgba(24, 128, 56, 0.3);
+
+    --elevation-0: none;
+    --elevation-1: 0 1px 3px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.08);
+    --elevation-2: 0 6px 18px rgba(15, 23, 42, 0.1);
+    --elevation-3: 0 18px 32px rgba(15, 23, 42, 0.12);
+
+    /* Tailwind bridge tokens */
+    --color-background-app: var(--background-app);
+    --color-background-surface: var(--background-surface);
+    --color-background-surface-hover: var(--background-surface-hover);
+    --color-text-primary: var(--text-primary);
+    --color-text-secondary: var(--text-secondary);
+    --color-text-tertiary: var(--text-tertiary);
+    --color-border-ui: var(--border-ui);
+    --color-border-ui-hover: var(--border-ui-hover);
   }
 
   .dark {
-    --background-app: #09090b;
-    --background-surface: #121214;
-    --background-surface-hover: #18181b;
-    --text-primary: #fafafa;
-    --text-secondary: #a1a1aa;
-    --text-tertiary: #52525b;
-    --border-ui: #27272a;
-    --border-ui-hover: #3f3f46;
+    color-scheme: dark;
+
+    --primary: #34a853;
+    --primary-strong: #188038;
+    --primary-container: #0d3d1d;
+    --on-primary: #ffffff;
+    --on-primary-container: #e6f4ea;
+
+    --secondary: #b8bfc8;
+    --secondary-container: #353a42;
+    --on-secondary: #111821;
+
+    --surface: #18191c;
+    --surface-container-low: #1e1f23;
+    --surface-container: #252629;
+    --surface-container-high: #2e3033;
+    --surface-container-highest: #3a3c40;
+    --surface-state-hover: rgba(255, 255, 255, 0.05);
+    --surface-state-active: rgba(255, 255, 255, 0.10);
+    --surface-variant: #35373b;
+
+    --outline: #4a4c52;
+    --outline-variant: #3a3c40;
+    --border-strong: #5e6068;
+
+    --background-app: var(--surface);
+    --background-surface: var(--surface-container);
+    --background-surface-hover: var(--surface-container-high);
+    --surface-raised: var(--surface-container-high);
+
+    --text-primary: #e4e6ea;
+    --text-secondary: #9ca0a8;
+    --text-tertiary: #6e737c;
+
+    --border-ui: var(--outline);
+    --border-ui-hover: #5a5d65;
+
+    --neutral-0: #050608;
+    --neutral-5: #0c0d10;
+    --neutral-10: #13141a;
+    --neutral-20: #1c1d22;
+    --neutral-30: #26282e;
+    --neutral-40: #32343c;
+    --neutral-60: #4e5060;
+    --neutral-80: #b8bcc8;
+    --neutral-90: #dfe2ec;
+    --neutral-100: #f4f5f9;
+
+    --state-layer-primary: rgba(52, 168, 83, 0.20);
+    --state-layer-primary-strong: rgba(52, 168, 83, 0.28);
+    --state-layer-neutral: rgba(255, 255, 255, 0.06);
+    --state-layer-neutral-strong: rgba(255, 255, 255, 0.12);
+
+    --focus-ring: 0 0 0 1px rgba(52, 168, 83, 0.4);
+  }
+
+  *, *::before, *::after {
+    border-color: var(--border-ui);
   }
 
   body {
-    @apply bg-[var(--background-app)] text-[var(--text-primary)] antialiased selection:bg-brand-500/30;
+    background-color: var(--background-app);
+    color: var(--text-primary);
     font-family: var(--font-sans);
+    font-weight: 400;
+    line-height: 1.55;
+    letter-spacing: -0.01em;
+    margin: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+  }
+
+  p,
+  span,
+  button,
+  input,
+  textarea {
+    font-family: inherit;
+    letter-spacing: -0.005em;
+  }
+
+  ::selection {
+    background: var(--state-layer-primary-strong);
+    color: var(--on-primary);
   }
 }
 
@@ -100,7 +246,7 @@
 }
 
 .mention {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--state-layer-primary);
   color: var(--text-primary);
   padding: 0.1rem 0.35rem;
   border-radius: 9999px;
@@ -114,7 +260,7 @@
   background: var(--background-surface);
   border: 1px solid var(--border-ui);
   border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--elevation-2);
   padding: 0.25rem;
 }
 
@@ -130,10 +276,11 @@
   background: transparent;
   cursor: pointer;
   color: var(--text-primary);
+  transition: background 150ms ease;
 }
 
 .mention-dropdown__item:hover {
-  background: rgba(16, 185, 129, 0.08);
+  background: var(--state-layer-neutral);
 }
 
 .mention-dropdown__item .pill {
@@ -143,4 +290,22 @@
 .mention-dropdown__item .desc {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+@layer utilities {
+  .elevation-0 {
+    box-shadow: var(--elevation-0);
+  }
+
+  .elevation-1 {
+    box-shadow: var(--elevation-1);
+  }
+
+  .elevation-2 {
+    box-shadow: var(--elevation-2);
+  }
+
+  .elevation-3 {
+    box-shadow: var(--elevation-3);
+  }
 }

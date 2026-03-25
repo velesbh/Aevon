@@ -7,6 +7,7 @@ import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  Download,
   FileText,
   GripVertical,
   LayoutGrid,
@@ -20,16 +21,28 @@ import {
   Timer,
   Type,
   Image as ImageIcon,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDashboardWorkspace } from "@/components/dashboard/workspace-provider";
 import { useLanguage, useTranslation } from "@/lib/i18n";
+import { useSearchParams } from "next/navigation";
 import { FileSelectorModal } from "@/components/dashboard/file-selector-modal";
-import { RichTextEditor, type MentionEntity, type RichTextEditorHandle } from "@/components/rich-text/rich-text-editor";
+import { RichTextEditor, type RichTextEditorHandle } from "@/components/rich-text/rich-text-editor";
+import type { MentionEntity } from "@/components/rich-text/mention-data";
 import { RichTextToolbar } from "@/components/rich-text/rich-text-toolbar";
-import { createCharacterImageSignedUrl, getChapterText, getChapterSynopsis, type ChapterRecord } from "@/lib/workspace";
+import { createCharacterImageSignedUrl, getChapterText, getChapterSynopsis, type ChapterRecord, requestProjectExport } from "@/lib/workspace";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button as MuiButton,
+} from "@mui/material";
+
 
 function formatRelativeTime(value: string, t: (key: string) => string) {
   const timestamp = new Date(value).getTime();
@@ -46,23 +59,28 @@ type ViewMode = "editor" | "outline";
 export default function ManuscriptPage() {
   const {
     activeProjectTitle,
+    activeProjectId,
     chapters,
     createChapterRecord,
     deleteChapterRecord,
     error: workspaceError,
     loading,
+    saveActiveProjectRecord,
     saveChapterRecord,
     uploadFileRecord,
+    workspace,
     worldElements,
   } = useDashboardWorkspace();
   const { t } = useTranslation();
+
+  const searchParams = useSearchParams();
+  const urlChapterId = searchParams.get("id");
 
   const [localChapters, setLocalChapters] = useState<ChapterRecord[]>([]);
   const [activeChapterId, setActiveChapterId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [synopses, setSynopses] = useState<Record<string, string>>({});
   const [draftTitle, setDraftTitle] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [focusMode, setFocusMode] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("editor");
   const [saving, setSaving] = useState(false);
@@ -72,13 +90,33 @@ export default function ManuscriptPage() {
   const [draggedChapterId, setDraggedChapterId] = useState<string | null>(null);
   const [timerActive, setTimerActive] = useState(false);
   const [timeLeft, setTimeLeft] = useState(25 * 60);
+  const [timerDialogOpen, setTimerDialogOpen] = useState(false);
+  const [timerInput, setTimerInput] = useState("25");
+
+  const [goalDialogOpen, setGoalDialogOpen] = useState(false);
+  const [goalInput, setGoalInput] = useState("2000");
+  const [dailyGoal, setDailyGoal] = useState(2000);
+
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; chapterId: string } | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [editorInstance, setEditorInstance] = useState<Editor | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const richTextRef = useRef<RichTextEditorHandle>(null);
+  const [isEditing, setIsEditing] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) setIsEditing(false);
+      else setIsEditing(true);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
   const mentionEntities: MentionEntity[] = useMemo(() => {
     return worldElements
       .filter((el) => ["character", "location", "item", "lore"].includes(el.type))
@@ -87,8 +125,12 @@ export default function ManuscriptPage() {
         label: element.name || "Untitled",
         type: element.type as MentionEntity["type"],
         description: element.description ?? undefined,
+        imageUrl: undefined,
+        folderId: element.project_id,
+        folderName: element.project_id === activeProjectId ? t("manuscript.currentProject") : t("manuscript.otherProjects"),
+        folderCategory: element.project_id === activeProjectId ? "active" : "shared",
       }));
-  }, [worldElements]);
+  }, [worldElements, activeProjectId, t]);
 
   useEffect(() => {
     setLocalChapters(chapters);
@@ -111,6 +153,23 @@ export default function ManuscriptPage() {
     }
   }, [activeChapterId, localChapters]);
 
+  // Load settings from active project
+  useEffect(() => {
+    if (workspace?.activeProject?.settings) {
+      const settings = workspace.activeProject.settings as any;
+      if (settings.dailyGoal) {
+        setDailyGoal(settings.dailyGoal);
+        setGoalInput(settings.dailyGoal.toString());
+      }
+      if (settings.timerMinutes) {
+        setTimerInput(settings.timerMinutes.toString());
+        if (!timerActive) {
+          setTimeLeft(settings.timerMinutes * 60);
+        }
+      }
+    }
+  }, [workspace?.activeProject?.id, workspace?.activeProject?.settings, timerActive]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (timerActive && timeLeft > 0) {
@@ -127,6 +186,19 @@ export default function ManuscriptPage() {
     () => localChapters.find((chapter) => chapter.id === activeChapterId) ?? null,
     [activeChapterId, localChapters],
   );
+
+  // Sync with URL ID
+  useEffect(() => {
+    if (urlChapterId && urlChapterId !== activeChapterId) {
+      const chapter = localChapters.find(c => c.id === urlChapterId);
+      if (chapter) {
+        handleSelectChapter(chapter);
+      }
+    } else if (!urlChapterId && localChapters.length > 0 && !activeChapterId) {
+      // Default to first chapter if no ID in URL and we haven't selected one
+      handleSelectChapter(localChapters[0]);
+    }
+  }, [urlChapterId, localChapters, activeChapterId]);
 
   const plainTextDraft = draft.replace(/<[^>]+>/g, " ");
   const wordCount = plainTextDraft.trim().split(/\s+/).filter(Boolean).length;
@@ -270,6 +342,52 @@ export default function ManuscriptPage() {
     }
   };
 
+  const handleExportChapter = async () => {
+    if (!activeProjectId || !activeChapterId) return;
+    setStatus("Exporting chapter...");
+    try {
+      const { blob, fileName } = await requestProjectExport(activeProjectId, "docx", {
+        includeManuscript: [activeChapterId],
+        includeTitlePage: false,
+        includeTableOfContents: false,
+        includeCharacters: false,
+        includeLocations: false,
+        includeLore: false,
+        includeItems: false,
+        includeIdeas: false,
+        standardManuscriptFormat: true
+      });
+
+      let isTauri = false;
+      try {
+        isTauri = typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
+      } catch (e) {}
+
+      if (isTauri) {
+        const { save } = await import('@tauri-apps/plugin-dialog');
+        const { writeFile } = await import('@tauri-apps/plugin-fs');
+        const savePath = await save({ defaultPath: fileName });
+        if (savePath) {
+          const arrayBuffer = await blob.arrayBuffer();
+          await writeFile(savePath, new Uint8Array(arrayBuffer));
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = fileName;
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      }
+      setStatus("Export successful!");
+      setTimeout(() => setStatus(null), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export chapter");
+    }
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center bg-[var(--background-app)]">
@@ -281,105 +399,8 @@ export default function ManuscriptPage() {
   const isOutlineView = viewMode === "outline";
 
   return (
+
     <div className="flex h-full w-full bg-[var(--background-app)] overflow-hidden">
-      {/* Sidebar / Navigator */}
-      <AnimatePresence initial={false} mode="wait">
-        {sidebarOpen && !focusMode && (
-          <motion.aside
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="flex flex-col border-r border-[var(--border-ui)] bg-[var(--background-surface)] z-20"
-          >
-            <div className="h-14 flex items-center justify-between px-4 border-b border-[var(--border-ui)] shrink-0">
-              <div className="flex flex-col overflow-hidden mr-2">
-                <span className="text-sm font-semibold truncate text-[var(--text-primary)]">
-                  {t("dashboard.nav.manuscript")}
-                </span>
-                <span className="text-xs text-[var(--text-tertiary)] truncate">
-                  {activeProjectTitle ?? t("ms.noProject")}
-                </span>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                onClick={handleAddChapter}
-                disabled={creating}
-              >
-                {creating ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto py-2">
-              {localChapters.length > 0 ? (
-                <div className="space-y-1 px-2">
-                  {localChapters.map((chapter) => {
-                    const isActive = chapter.id === activeChapterId;
-                    const isDragged = draggedChapterId === chapter.id;
-
-                    return (
-                      <div
-                        key={chapter.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, chapter.id)}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, chapter.id)}
-                        onClick={() => handleSelectChapter(chapter)}
-                        onContextMenu={(e) => handleContextMenu(e, chapter.id)}
-                        className={cn(
-                          "group relative flex items-start gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-colors border border-transparent",
-                          isActive
-                            ? "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400"
-                            : "hover:bg-[var(--background-surface-hover)] text-[var(--text-secondary)]",
-                          isDragged && "opacity-50"
-                        )}
-                      >
-                        <div className="mt-1 text-[var(--text-tertiary)] opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing">
-                          <GripVertical size={14} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <span className={cn("text-sm font-medium truncate", isActive ? "text-[var(--text-primary)]" : "")}>
-                              {chapter.title || t("ms.untitled")}
-                            </span>
-                            <span className="text-[10px] text-[var(--text-tertiary)] shrink-0">
-                              {formatRelativeTime(chapter.updated_at, t)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1 text-[var(--text-tertiary)]">
-                              <BookOpen size={10} />
-                              <span className="text-[10px]">{chapter.word_count} {t("ms.words_abbr")}</span>
-                            </div>
-                            {isActive && isDirty && (
-                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 ml-auto" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                  <FileText className="h-8 w-8 text-[var(--text-tertiary)] mb-3" />
-                  <p className="text-sm text-[var(--text-secondary)] mb-4">{t("ms.noChapters")}</p>
-                  <Button onClick={handleAddChapter} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
-                    {t("ms.createFirst")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 relative h-full">
         {/* Top Toolbar */}
@@ -390,15 +411,16 @@ export default function ManuscriptPage() {
             className="h-14 border-b border-[var(--border-ui)] bg-[var(--background-surface)] flex items-center justify-between px-4 z-10 shrink-0"
           >
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-              >
-                <AlignLeft size={18} />
-              </Button>
-              <div className="h-4 w-px bg-[var(--border-ui)] mx-1" />
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)]">
+                <BookOpen size={14} className="text-green-600" />
+                <span className="text-sm font-semibold text-[var(--text-primary)]">
+                  {t("dashboard.nav.manuscript")}
+                </span>
+                <span className="text-[var(--text-tertiary)] mx-1">/</span>
+                <span className="text-sm text-[var(--text-secondary)] truncate max-w-[150px]">
+                  {activeChapter?.title || t("manuscript.chapter.untitled")}
+                </span>
+              </div>
               <div className="flex items-center bg-[var(--background-app)] rounded-full p-0.5 border border-[var(--border-ui)]">
                 <button
                   onClick={() => setViewMode("editor")}
@@ -428,35 +450,68 @@ export default function ManuscriptPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {!isOutlineView && editorInstance && (
-                <div className="hidden lg:block mr-2">
-                   <RichTextToolbar 
-                     editor={editorInstance} 
-                     onOpenImagePicker={() => setIsImageModalOpen(true)}
-                     className="border-none shadow-none bg-transparent" 
-                   />
-                </div>
-              )}
-              
               {!isOutlineView && (
                 <>
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--background-app)] border border-[var(--border-ui)]">
-                    <Target className="h-3.5 w-3.5 text-green-500" />
-                    <span className="text-xs font-medium text-[var(--text-primary)]">1,240 / 2k</span>
-                    <div className="w-16 h-1.5 bg-[var(--border-ui)] rounded-full overflow-hidden">
-                      <div className="h-full bg-green-500 w-[62%]" />
+                  {editorInstance && (
+                    <div className="hidden md:flex items-center border-r border-[var(--border-ui)] pr-3 mr-1">
+                      <RichTextToolbar 
+                        editor={editorInstance} 
+                        onOpenImagePicker={() => setIsImageModalOpen(true)}
+                        className="flex items-center gap-1"
+                        variant="ghost"
+                      />
                     </div>
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setFocusMode(true)}
-                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
-                    title={t("manuscript.focus.enter")}
+                  )}
+                  {isMobile && (
+                    <Button
+                      variant={isEditing ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setIsEditing(!isEditing)}
+                      className={cn(
+                        "rounded-full px-4 font-semibold transition-all",
+                        isEditing 
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-200" 
+                          : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                      )}
+                    >
+                      {isEditing ? t("ms.done") : t("ms.edit")}
+                    </Button>
+                  )}
+                  <button 
+                    onClick={() => setGoalDialogOpen(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[var(--background-app)] border border-[var(--border-ui)] hover:bg-[var(--background-surface-hover)] transition-colors"
                   >
-                    <Maximize2 size={18} />
-                  </Button>
+                    <Target className="h-3.5 w-3.5 text-green-500" />
+                    <span className="text-xs font-medium text-[var(--text-primary)]">
+                      {wordCount} / {dailyGoal >= 1000 ? `${(dailyGoal / 1000).toFixed(1).replace('.0', '')}k` : dailyGoal}
+                    </span>
+                    <div className="hidden sm:block w-16 h-1.5 bg-[var(--border-ui)] rounded-full overflow-hidden">
+                      <div className="h-full bg-green-500 transition-all duration-300" style={{ width: `${Math.min(100, (wordCount / dailyGoal) * 100)}%` }} />
+                    </div>
+                  </button>
+                  
+                  {!isMobile && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleExportChapter}
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        title={t("manuscript.export_chapter") || "Export Chapter"}
+                      >
+                        <Download size={18} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setFocusMode(true)}
+                        className="text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                        title={t("manuscript.focus.enter")}
+                      >
+                        <Maximize2 size={18} />
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
               
@@ -544,7 +599,7 @@ export default function ManuscriptPage() {
               </div>
             </div>
           ) : (
-            <div className="min-h-full py-12 px-4 flex justify-center">
+            <div className="min-h-full py-12 px-4 flex flex-col items-center">
               {activeChapter ? (
                 <div 
                   className={cn(
@@ -559,7 +614,11 @@ export default function ManuscriptPage() {
                       value={draftTitle}
                       onChange={(e) => setDraftTitle(e.target.value)}
                       placeholder={t("ms.chapter_title_placeholder")}
-                      className="w-full text-center font-serif text-4xl font-bold bg-transparent border-none focus:outline-none placeholder:text-[var(--text-tertiary)] mb-12 text-[var(--text-primary)]"
+                      readOnly={!isEditing}
+                      className={cn(
+                        "w-full text-center font-serif text-4xl font-bold bg-transparent border-none focus:outline-none placeholder:text-[var(--text-tertiary)] mb-12 text-[var(--text-primary)]",
+                        !isEditing && "cursor-default"
+                      )}
                     />
                     
                     <RichTextEditor
@@ -567,6 +626,7 @@ export default function ManuscriptPage() {
                       ref={richTextRef}
                       value={draft}
                       onChange={setDraft}
+                      readOnly={!isEditing}
                       mentionItems={mentionEntities}
                       placeholder={t("ms.startWriting")}
                       onOpenImagePicker={() => setIsImageModalOpen(true)}
@@ -574,7 +634,7 @@ export default function ManuscriptPage() {
                       showToolbar={false}
                       onEditorReady={setEditorInstance}
                       minHeight="600px"
-                      className="w-full"
+                      className={cn("w-full transition-all duration-300", !isEditing && "opacity-95")}
                     />
                   </div>
                 </div>
@@ -606,10 +666,13 @@ export default function ManuscriptPage() {
               <div className="h-3 w-px bg-[var(--border-ui)]" />
               <span className="flex items-center gap-1.5">
                 <Timer size={12} />
-                {formatTime(timeLeft)}
+                <button onClick={() => setTimerDialogOpen(true)} className="hover:text-[var(--text-primary)] transition-colors">
+                  {formatTime(timeLeft)}
+                </button>
+                <div className="h-3 w-px bg-[var(--border-ui)] mx-0.5" />
                 <button 
                   onClick={() => setTimerActive(!timerActive)}
-                  className="ml-1 font-semibold text-[var(--text-primary)] hover:underline"
+                  className="font-semibold text-[var(--text-primary)] hover:underline"
                 >
                   {timerActive ? t("ms.timer.pause") : t("ms.timer.start")}
                 </button>
@@ -617,13 +680,19 @@ export default function ManuscriptPage() {
             </div>
             
             <div className="flex items-center gap-4">
-               {status && (
-                <span className="text-green-600 font-medium animate-pulse">
+               {status && !saving && (
+                <span className="text-emerald-500 font-medium animate-pulse flex items-center gap-1.5">
                   {status}
                 </span>
               )}
+              {saving && (
+                <span className="text-emerald-500 font-medium flex items-center gap-1.5">
+                  <RefreshCw size={14} className="animate-spin" />
+                  Saving...
+                </span>
+              )}
               {error && (
-                <span className="text-red-600 font-medium">
+                <span className="text-red-600 font-medium flex items-center gap-1.5">
                   {error}
                 </span>
               )}
@@ -690,6 +759,70 @@ export default function ManuscriptPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={timerDialogOpen} onClose={() => setTimerDialogOpen(false)}>
+        <DialogTitle>{t("ms.timer.set_title") || "Set Timer"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={t("ms.timer.minutes") || "Minutes"}
+            type="number"
+            fullWidth
+            value={timerInput}
+            onChange={(e) => setTimerInput(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={() => setTimerDialogOpen(false)}>{t("common.cancel") || "Cancel"}</MuiButton>
+          <MuiButton onClick={async () => {
+            const val = parseInt(timerInput, 10);
+            if (!isNaN(val) && val > 0) {
+              setTimeLeft(val * 60);
+              setTimerDialogOpen(false);
+              // Persist setting
+              const currentSettings = (workspace?.activeProject?.settings as any) || {};
+              await saveActiveProjectRecord({
+                settings: { ...currentSettings, timerMinutes: val }
+              });
+            }
+          }} variant="contained" color="success">
+            {t("common.save") || "Save"}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={goalDialogOpen} onClose={() => setGoalDialogOpen(false)}>
+        <DialogTitle>{t("ms.goal.set_title") || "Set Writing Goal"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label={t("ms.goal.words") || "Word count goal"}
+            type="number"
+            fullWidth
+            value={goalInput}
+            onChange={(e) => setGoalInput(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <MuiButton onClick={() => setGoalDialogOpen(false)}>{t("common.cancel") || "Cancel"}</MuiButton>
+          <MuiButton onClick={async () => {
+            const val = parseInt(goalInput, 10);
+            if (!isNaN(val) && val > 0) {
+              setDailyGoal(val);
+              setGoalDialogOpen(false);
+              // Persist setting
+              const currentSettings = (workspace?.activeProject?.settings as any) || {};
+              await saveActiveProjectRecord({
+                settings: { ...currentSettings, dailyGoal: val }
+              });
+            }
+          }} variant="contained" color="success">
+            {t("common.save") || "Save"}
+          </MuiButton>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

@@ -128,7 +128,7 @@ export function LoreDiagramEditor({ initialData, onChange }: LoreDiagramEditorPr
           <button
             type="button"
             onClick={() => addNode('input')}
-            className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md border border-blue-200 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md border border-emerald-200 transition-colors"
           >
             + Source
           </button>

@@ -1,23 +1,36 @@
 import { getDb, isTauriEnvironment } from './offline-db';
 
 let isSyncing = false;
-const listeners = new Set<(syncing: boolean) => void>();
+let isOffline = typeof window !== 'undefined' ? !navigator.onLine : false;
 
-export function onSyncStateChange(listener: (syncing: boolean) => void) {
+const listeners = new Set<(syncing: boolean, offline: boolean) => void>();
+
+export function onSyncStateChange(listener: (syncing: boolean, offline: boolean) => void) {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+function notifyListeners() {
+  listeners.forEach((l) => l(isSyncing, isOffline));
 }
 
 export function setSyncing(state: boolean) {
   if (isSyncing !== state) {
     isSyncing = state;
-    listeners.forEach((l) => l(state));
+    notifyListeners();
+  }
+}
+
+export function setOffline(state: boolean) {
+  if (isOffline !== state) {
+    isOffline = state;
+    notifyListeners();
   }
 }
 
 export async function addToQueue(action: string, payload: any) {
   if (!isTauriEnvironment()) {
-    console.warn("Skipping sync queue: Not an Electron environment.");
+    console.warn("Skipping sync queue: Not a Tauri environment.");
     return;
   }
 

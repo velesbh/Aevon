@@ -154,7 +154,7 @@ export default function Home() {
             <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-primary/60 hidden lg:block w-12 h-12 transform -rotate-12 pointer-events-none">
               <DoodleArrow />
             </div>
-            <Button size="lg" className="rounded-full px-12 h-16 text-xl font-semibold shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all hover:-translate-y-1" asChild>
+            <Button size="lg" className="rounded-full px-12 h-16 text-xl font-semibold shadow-sm hover:shadow-md transition-all hover:-translate-y-1" asChild>
               <Link href="/login">
                 {t("landing.hero.startBuilding") || "Start Building"}
                 <ArrowRight className="ml-2 w-6 h-6" />
@@ -350,7 +350,7 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl font-light">
             {t("landing.cta.desc") || "Export your entire workspace at any time. Aevon guarantees your data remains yours, always accessible and secure."}
           </p>
-          <Button size="lg" className="rounded-full px-14 h-20 text-2xl font-semibold shadow-2xl shadow-primary/30 hover:-translate-y-2 transition-transform duration-300" asChild>
+          <Button size="lg" className="rounded-full px-14 h-20 text-2xl font-semibold shadow-sm hover:shadow-md hover:-translate-y-2 transition-transform duration-300" asChild>
             <Link href="/login">{t("landing.cta.button") || "Create Your Workspace"}</Link>
           </Button>
         </motion.div>
@@ -482,7 +482,7 @@ function FeatureShowcase({ index, icon, title, description, visual, align }: { i
         {index === 2 && <div className="absolute -bottom-10 -right-10 w-24 h-24 text-primary/20 transform rotate-180"><DoodleArrow /></div>}
         {index === 3 && <div className="absolute -top-10 -right-10 w-16 h-16 text-primary/20"><DoodleStar /></div>}
         
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-8 shadow-inner shadow-primary/20 border border-primary/20">
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-8 border border-primary/10">
           {icon}
         </div>
         <h3 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">{title}</h3>
@@ -514,9 +514,9 @@ function PlatformCard({ icon, title, description, action, highlight = false, del
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, delay }}
-      className={`p-10 rounded-3xl border flex flex-col items-center text-center transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 ${highlight ? 'border-primary/40 bg-primary/5 shadow-xl shadow-primary/10' : 'border-border/40 bg-card/50 hover:bg-card/80 hover:shadow-xl'}`}
+      className={`p-10 rounded-3xl border flex flex-col items-center text-center transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 ${highlight ? 'border-primary/20 bg-primary/5 shadow-md' : 'border-border/40 bg-card/50 hover:bg-card/80 hover:shadow-md'}`}
     >
-      <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-8 transition-transform duration-300 group-hover:scale-110 ${highlight ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/30' : 'bg-muted text-foreground'}`}>
+      <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-8 transition-transform duration-300 group-hover:scale-110 ${highlight ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-foreground'}`}>
         {icon}
       </div>
       <h3 className="font-bold text-2xl mb-4">{title}</h3>
@@ -562,7 +562,7 @@ function TypingStory({ story }: { story: string }) {
       const lower = part.toLowerCase();
       if (["map", "mapa", "shadow", "sombra", "secrets", "secretos"].includes(lower)) {
         return (
-          <span key={index} className="text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/20 cursor-pointer shadow-sm shadow-primary/10">
+          <span key={index} className="text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/10 cursor-pointer shadow-sm">
             {part}
           </span>
         );
@@ -598,7 +598,7 @@ function MapVisual() {
       <motion.div
         animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 left-1/2 w-6 h-6 bg-primary rounded-full shadow-[0_0_20px_rgba(var(--primary),0.8)] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
+        className="absolute top-1/2 left-1/2 w-6 h-6 bg-primary rounded-full shadow-sm -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
       >
         <div className="w-2 h-2 bg-background rounded-full" />
       </motion.div>
@@ -626,7 +626,7 @@ function MapVisual() {
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
         className="absolute bottom-[25%] right-[20%] flex flex-col items-center gap-1"
       >
-        <div className="w-4 h-4 bg-primary/80 rounded-full shadow-lg shadow-primary/20" />
+        <div className="w-4 h-4 bg-primary/80 rounded-full shadow-sm" />
         <div className="w-20 h-1.5 bg-primary/30 rounded-full" />
       </motion.div>
     </div>
@@ -710,7 +710,7 @@ function StorageVisual() {
           initial={{ x: -30, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.6, delay: i * 0.2, repeat: Infinity, repeatDelay: 4 }}
-          className="w-full max-w-sm h-12 border border-primary/30 bg-card rounded-lg flex items-center px-4 gap-4 shadow-lg shadow-primary/5 relative overflow-hidden z-10"
+          className="w-full max-w-sm h-12 border border-primary/10 bg-card rounded-lg flex items-center px-4 gap-4 shadow-sm relative overflow-hidden z-10"
         >
           <motion.div 
             animate={{ left: ['-10%', '110%'] }}

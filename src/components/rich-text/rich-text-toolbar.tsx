@@ -31,9 +31,10 @@ export interface RichTextToolbarProps {
   editor: Editor | null;
   onOpenImagePicker?: () => void;
   className?: string;
+  variant?: "default" | "ghost";
 }
 
-export function RichTextToolbar({ editor, onOpenImagePicker, className }: RichTextToolbarProps) {
+export function RichTextToolbar({ editor, onOpenImagePicker, className, variant = "default" }: RichTextToolbarProps) {
   const commands = useMemo<ToggleCommand[]>(
     () => [
       {
@@ -107,7 +108,8 @@ export function RichTextToolbar({ editor, onOpenImagePicker, className }: RichTe
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-1 rounded-lg border border-[var(--border-ui)] bg-[var(--background-surface)]/90 px-2 py-1 shadow-sm backdrop-blur",
+        "flex flex-wrap items-center gap-1",
+        variant === "default" && "rounded-lg border border-[var(--border-ui)] bg-[var(--background-surface)]/90 px-2 py-1 shadow-sm backdrop-blur",
         className,
       )}
     >
