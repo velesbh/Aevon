@@ -27,7 +27,7 @@ export function DashboardLanguageToggle() {
   return (
     <div className="rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-app)] p-1">
       <div className="relative grid grid-cols-2 gap-1">
-        {options.map((option) => {
+        {(options ?? []).map((option) => {
           const isActive = language === option.id;
           return (
             <button

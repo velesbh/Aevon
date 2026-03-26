@@ -157,26 +157,38 @@ export default function SettingsPage() {
         sx={{
           borderBottom: "1px solid",
           borderColor: "divider",
-          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.92),
-          backdropFilter: "blur(18px)",
+          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.85),
+          backdropFilter: "blur(16px)",
         }}
       >
         <CardContent sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-          <Box>
-            <Typography variant="h5" fontWeight={800} color="text.primary">
-              {t("settings.title") || "Settings"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {t("settings.description") || "Manage your preferences and active projects."}
-            </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ p: 1, borderRadius: 2, bgcolor: "action.hover", color: "text.secondary", display: "flex" }}>
+              <SettingsIcon size={18} />
+            </Box>
+            <Box>
+              <Typography variant="h6" fontWeight={700} color="text.primary">
+                {t("settings.title") || "Settings"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {t("settings.description") || "Manage your preferences and active projects."}
+              </Typography>
+            </Box>
           </Box>
           <Button
             onClick={handleCreateProject}
             disabled={creatingProject}
             variant="outlined"
-            color="success"
-            startIcon={creatingProject ? <Loader2 className="animate-spin" size={16} /> : <PlusCircle size={16} />}
-            sx={{ borderRadius: 999, fontWeight: 700 }}
+            startIcon={creatingProject ? <Loader2 className="animate-spin" size={14} /> : <PlusCircle size={14} />}
+            sx={{ 
+              borderRadius: 999, 
+              fontWeight: 600, 
+              borderColor: "divider", 
+              color: "text.secondary",
+              "&:hover": { borderColor: "text.primary", color: "text.primary" },
+              "&:active": { transform: "scale(0.97)" },
+              transition: "all 0.15s ease",
+            }}
           >
             {t("settings.create_project")}
           </Button>
@@ -201,26 +213,30 @@ export default function SettingsPage() {
                   alignItems: "flex-start",
                   textAlign: "left",
                   justifyContent: "flex-start",
-                  minHeight: 48,
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: { xs: 0, md: 2 },
+                  minHeight: 44,
+                  px: 2.5,
+                  py: 1.25,
+                  borderRadius: { xs: 0, md: 2.5 },
                   textTransform: "none",
-                  fontWeight: 600,
-                  fontSize: "0.95rem",
-                  transition: "all 0.2s",
+                  fontWeight: 500,
+                  fontSize: "0.875rem",
+                  color: "text.secondary",
+                  transition: "all 0.15s ease",
                   "&:hover": {
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+                    bgcolor: "action.hover",
                   },
                   "&.Mui-selected": {
-                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+                    bgcolor: "action.hover",
+                    color: "text.primary",
+                    fontWeight: 600,
                   },
                 },
                 "& .MuiTabs-indicator": {
                   left: 0,
                   right: "auto",
-                  width: 3,
+                  width: 2,
                   borderRadius: "0 4px 4px 0",
+                  bgcolor: "var(--primary, #34a853)",
                 },
               }}
             >
@@ -272,7 +288,7 @@ export default function SettingsPage() {
               </Paper>
             )}
 
-            <Card sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider" }} className="surface-raised">
+            <Card sx={{ borderRadius: 4, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>
               {/* Profile Tab */}
               <TabPanel value={tabIndex} index={0}>
                 <Box mb={3}>
@@ -347,7 +363,11 @@ export default function SettingsPage() {
                       disableElevation
                       startIcon={savingProfile ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
                       disabled={savingProfile || !isProfileDirty}
-                      sx={{ borderRadius: 999, px: 3, py: 1, fontWeight: 700 }}
+                      sx={{ 
+                        borderRadius: 999, px: 3, py: 1, fontWeight: 600,
+                        "&:active": { transform: "scale(0.97)" },
+                        transition: "all 0.15s ease",
+                      }}
                     >
                       {t("settings.actions.save_profile")}
                     </Button>
@@ -423,7 +443,11 @@ export default function SettingsPage() {
                       disableElevation
                       startIcon={savingProject ? <CircularProgress size={16} color="inherit" /> : <Save size={16} />}
                       disabled={savingProject || !isActiveProjectDirty}
-                      sx={{ borderRadius: 999, px: 3, py: 1, fontWeight: 700 }}
+                      sx={{ 
+                        borderRadius: 999, px: 3, py: 1, fontWeight: 600,
+                        "&:active": { transform: "scale(0.97)" },
+                        transition: "all 0.15s ease",
+                      }}
                     >
                       {t("settings.actions.save_project")}
                     </Button>

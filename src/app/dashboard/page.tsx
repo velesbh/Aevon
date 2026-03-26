@@ -117,6 +117,13 @@ export default function DashboardOverview() {
   const displayName = workspace.profile?.name ?? workspace.user.email ?? t("dashboard.writer");
   const projectGenre = workspace.activeProject.genre ?? workspace.profile?.genre ?? t("dashboard.uncategorized");
 
+  const dailyGoal = ((workspace.activeProject.settings as any)?.dailyGoal as number) || 2000;
+  const dailyPercent = Math.min(100, Math.round((totalWords / dailyGoal) * 100));
+  const formatGoalValue = (current: number, goal: number) => {
+    const fmtNum = (n: number) => n >= 1000 ? `${(n / 1000).toFixed(1).replace('.0', '')}k` : n.toString();
+    return `${fmtNum(current)} / ${fmtNum(goal)}`;
+  };
+
   const stats = [
     {
       label: t("dash.totalWords"),
@@ -140,9 +147,9 @@ export default function DashboardOverview() {
     },
     {
       label: t("dashboard.overview.daily_goal"),
-      value: "1,240 / 2k",
+      value: formatGoalValue(totalWords, dailyGoal),
       icon: Target,
-      sub: t("dashboard.overview.percent_completed").replace("{percent}", "62"),
+      sub: t("dashboard.overview.percent_completed").replace("{percent}", dailyPercent.toString()),
     },
   ];
 
@@ -163,11 +170,13 @@ export default function DashboardOverview() {
                 size="small"
                 label={projectGenre}
                 sx={{
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: "0.65rem",
-                  bgcolor: "rgba(16, 185, 129, 0.1)",
-                  color: "var(--color-primary, #10b981)",
+                  bgcolor: "var(--state-layer-neutral, rgba(0,0,0,0.04))",
+                  color: "text.secondary",
                   height: 22,
+                  border: "1px solid",
+                  borderColor: "divider",
                 }}
               />
             </Stack>
@@ -176,14 +185,16 @@ export default function DashboardOverview() {
               href="/dashboard/manuscript/"
               variant="contained"
               size="small"
-              startIcon={<PenTool size={15} />}
+              startIcon={<PenTool size={14} />}
               sx={{
-                borderRadius: 2,
+                borderRadius: 999,
                 px: 3,
-                fontWeight: 700,
+                fontWeight: 600,
                 textTransform: "none",
-                bgcolor: "var(--color-primary, #10b981)",
-                "&:hover": { bgcolor: "var(--color-primary-dark, #059669)" },
+                bgcolor: "var(--primary, #188038)",
+                "&:hover": { bgcolor: "var(--primary-strong, #115b27)" },
+                "&:active": { transform: "scale(0.97)" },
+                transition: "all 0.15s ease",
               }}
             >
               {t("dashboard.overview.continue_writing")}
@@ -226,7 +237,7 @@ export default function DashboardOverview() {
                     <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 1, fontSize: "0.65rem" }}>
                       {item.label}
                     </Typography>
-                    <Box sx={{ p: 0.75, borderRadius: 1.5, bgcolor: "rgba(16, 185, 129, 0.1)", color: "var(--color-primary, #10b981)", display: "flex" }}>
+                    <Box sx={{ p: 0.75, borderRadius: 1.5, bgcolor: "var(--state-layer-neutral, rgba(0,0,0,0.04))", color: "text.secondary", display: "flex" }}>
                       <item.icon size={14} />
                     </Box>
                   </Stack>
@@ -263,7 +274,7 @@ export default function DashboardOverview() {
                     href="/dashboard/manuscript/"
                     size="small"
                     endIcon={<ChevronRight size={14} />}
-                    sx={{ fontWeight: 600, textTransform: "none", color: "var(--color-primary, #10b981)", fontSize: "0.75rem" }}
+                    sx={{ fontWeight: 600, textTransform: "none", color: "var(--primary, #34a853)", fontSize: "0.75rem" }}
                   >
                     {t("dash.viewAll")}
                   </Button>
@@ -361,16 +372,17 @@ export default function DashboardOverview() {
                         cy="65"
                         r="52"
                         fill="none"
-                        stroke="var(--color-primary, #10b981)"
+                        stroke="var(--primary, #34a853)"
                         strokeWidth={10}
                         strokeDasharray={327}
-                        strokeDashoffset={124}
+                        strokeDashoffset={327 - (327 * dailyPercent) / 100}
                         strokeLinecap="round"
+                        style={{ transition: "stroke-dashoffset 0.6s ease" }}
                       />
                     </svg>
                     <Stack sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }} spacing={0}>
                       <Typography variant="h5" fontWeight={900}>
-                        62%
+                        {dailyPercent}%
                       </Typography>
                       <Typography variant="caption" fontWeight={600} color="text.disabled" sx={{ fontSize: "0.6rem", letterSpacing: 1.5, textTransform: "uppercase" }}>
                         {t("dashboard.overview.complete")}
@@ -378,10 +390,10 @@ export default function DashboardOverview() {
                     </Stack>
                   </Box>
                   <Typography variant="body2" fontWeight={700}>
-                    1,240 {t("dashboard.overview.words_written")}
+                    {totalWords.toLocaleString()} {t("dashboard.overview.words_written")}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    760 {t("dashboard.overview.words_to_go")}
+                    {Math.max(0, dailyGoal - totalWords).toLocaleString()} {t("dashboard.overview.words_to_go")}
                   </Typography>
                 </Box>
               </Stack>

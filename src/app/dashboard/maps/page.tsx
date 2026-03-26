@@ -304,7 +304,7 @@ export default function MapsPage() {
   if (loading) {
     return (
       <div className="flex flex-1 min-h-0 items-center justify-center bg-[var(--background-surface)]">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -320,13 +320,13 @@ export default function MapsPage() {
       >
         <div className="flex items-center justify-between border-b border-[var(--border-ui)]/50 px-4 py-3">
             <div className="flex items-center gap-2">
-                <MapIcon className="h-5 w-5 text-emerald-500" />
+                <MapIcon className="h-5 w-5 text-[var(--text-secondary)]" />
                 <h2 className="text-sm font-bold text-[var(--text-primary)]">{t('maps.title')}</h2>
             </div>
             <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--background-app)] hover:text-emerald-500"
+                className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--background-app)] hover:text-[var(--primary)] transition-colors"
                 title={t('maps.new')}
             >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -342,7 +342,7 @@ export default function MapsPage() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={`${t('maps.searchPlaceholder')} (Ctrl+K)`}
-                    className="w-full rounded-lg bg-[var(--background-app)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:ring-1 focus:ring-emerald-500/50"
+                    className="w-full rounded-lg bg-[var(--background-app)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:ring-1 focus:ring-[var(--primary)]/50"
                 />
                 {searchQuery && (
                     <button
@@ -371,11 +371,11 @@ export default function MapsPage() {
                                 className={cn(
                                     "flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-all",
                                     isActive
-                                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                        ? "bg-[var(--state-layer-primary)] text-[var(--primary)]"
                                         : "text-[var(--text-secondary)] hover:bg-[var(--background-app)]"
                                 )}
                             >
-                                <Compass className={cn("mt-0.5 h-4 w-4 shrink-0", isActive ? "text-emerald-600 dark:text-emerald-400" : "text-[var(--text-tertiary)]")} />
+                                <Compass className={cn("mt-0.5 h-4 w-4 shrink-0", isActive ? "text-[var(--primary)]" : "text-[var(--text-tertiary)]")} />
                                 <div className="min-w-0 flex-1">
                                     <div className="truncate text-sm font-medium">
                                         {element.name || "Untitled Map"}
@@ -418,7 +418,7 @@ export default function MapsPage() {
                          onClick={() => setIsDetailsPanelOpen(!isDetailsPanelOpen)}
                          className={cn(
                              "rounded-lg p-2 backdrop-blur-md transition-colors",
-                             isDetailsPanelOpen ? "bg-emerald-500 text-white shadow-lg" : "bg-black/40 text-white/80 hover:bg-black/60 hover:text-white"
+                             isDetailsPanelOpen ? "bg-[var(--primary)] text-white shadow-lg" : "bg-black/40 text-white/80 hover:bg-black/60 hover:text-white"
                          )}
                          title="Toggle Details"
                     >
@@ -460,7 +460,7 @@ export default function MapsPage() {
                             </p>
                             <button
                                 onClick={() => setSelectorOpen(true)}
-                                className="rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg hover:bg-emerald-500 transition-colors"
+                                className="rounded-full bg-[var(--primary)] px-6 py-2.5 text-sm font-semibold text-white shadow-lg hover:opacity-90 active:scale-95 transition-all"
                             >
                                 Select Map Image
                             </button>
@@ -502,7 +502,7 @@ export default function MapsPage() {
                         className={cn(
                             "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all",
                             isDirty 
-                                ? "bg-emerald-600 text-white shadow-md hover:bg-emerald-500" 
+                                ? "bg-[var(--primary)] text-white shadow-md hover:opacity-90 active:scale-95" 
                                 : "bg-[var(--background-app)] text-[var(--text-tertiary)] cursor-default opacity-50"
                         )}
                      >
@@ -521,7 +521,7 @@ export default function MapsPage() {
                             type="text"
                             value={entryDraft.name}
                             onChange={(e) => setEntryDraft(curr => curr ? { ...curr, name: e.target.value } : curr)}
-                            className="w-full rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm outline-none focus:border-emerald-500/50"
+                            className="w-full rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm outline-none focus:border-[var(--primary)]/50"
                             placeholder="e.g. The Northern Wastes"
                         />
                     </div>
@@ -533,7 +533,7 @@ export default function MapsPage() {
                                 type="text"
                                 value={entryDraft.attributes.region ?? ""}
                                 onChange={(e) => handleDraftChange("region", e.target.value)}
-                                className="w-full rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm outline-none focus:border-emerald-500/50"
+                                className="w-full rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm outline-none focus:border-[var(--primary)]/50"
                                 placeholder="Realm or Area"
                             />
                          </div>
@@ -548,7 +548,7 @@ export default function MapsPage() {
                     <div>
                         <label className="mb-1.5 flex items-center justify-between text-xs font-semibold text-[var(--text-secondary)]">
                             <span>Image Source</span>
-                            <button onClick={() => setSelectorOpen(true)} className="text-emerald-500 hover:text-emerald-600 hover:underline">Change</button>
+                            <button onClick={() => setSelectorOpen(true)} className="text-[var(--primary)] hover:opacity-80 hover:underline">Change</button>
                         </label>
                         <div className="flex items-center gap-2 rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)] p-2">
                             <div className="h-10 w-10 shrink-0 overflow-hidden rounded bg-black/10">
@@ -645,10 +645,10 @@ export default function MapsPage() {
                                     <button
                                         key={wp.id}
                                         onClick={() => setSelectedWaypointId(wp.id)}
-                                        className="flex w-full items-center justify-between rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)]/50 px-3 py-2 text-left text-sm transition-colors hover:border-emerald-500/30 hover:bg-[var(--background-app)]"
+                                        className="flex w-full items-center justify-between rounded-lg border border-[var(--border-ui)] bg-[var(--background-app)]/50 px-3 py-2 text-left text-sm transition-colors hover:border-[var(--border-ui-hover)] hover:bg-[var(--background-app)]"
                                     >
                                         <div className="flex items-center gap-2 overflow-hidden">
-                                            <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                                            <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--primary)]" />
                                             <span className="truncate font-medium text-[var(--text-secondary)]">
                                                 {wp.name || "Untitled Point"}
                                             </span>
@@ -694,7 +694,7 @@ export default function MapsPage() {
 
       {/* Notification Toast */}
       {status && (
-          <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
+          <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
               {status}
           </div>
       )}

@@ -127,14 +127,14 @@ export default function ProjectsDashboardPage() {
             <Box sx={{
               p: 1,
               borderRadius: 2,
-              bgcolor: "rgba(16, 185, 129, 0.1)",
-              color: "var(--color-primary, #10b981)",
+              bgcolor: "action.hover",
+              color: "text.secondary",
               display: "flex",
             }}>
-              <FolderKanban size={20} />
+              <FolderKanban size={18} />
             </Box>
             <Box>
-              <Typography variant="h6" fontWeight={800} sx={{ lineHeight: 1.2 }}>
+              <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
                 {t("projects.title")}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -147,22 +147,24 @@ export default function ProjectsDashboardPage() {
               size="small"
               onClick={handleRefresh}
               disabled={refreshing || loading}
-              sx={{ color: "text.secondary", "&:hover": { color: "text.primary" } }}
+              sx={{ color: "text.secondary", "&:hover": { color: "text.primary" }, "&:active": { transform: "scale(0.9)" }, transition: "all 0.15s ease" }}
             >
-              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+              <RefreshCw size={15} className={refreshing ? "animate-spin" : ""} />
             </IconButton>
             <Button
               variant="contained"
               size="small"
-              startIcon={<Plus size={16} />}
+              startIcon={<Plus size={14} />}
               onClick={() => setDialogOpen(true)}
               sx={{
-                borderRadius: 2,
+                borderRadius: 999,
                 textTransform: "none",
-                fontWeight: 700,
+                fontWeight: 600,
                 px: 2.5,
-                bgcolor: "var(--color-primary, #10b981)",
-                "&:hover": { bgcolor: "var(--color-primary-dark, #059669)" },
+                bgcolor: "var(--primary, #188038)",
+                "&:hover": { bgcolor: "var(--primary-strong, #115b27)" },
+                "&:active": { transform: "scale(0.97)" },
+                transition: "all 0.15s ease",
               }}
             >
               {t("projects.create")}
@@ -185,9 +187,9 @@ export default function ProjectsDashboardPage() {
             <Box sx={{
               p: 3,
               borderRadius: "50%",
-              bgcolor: "rgba(16, 185, 129, 0.06)",
+              bgcolor: "action.hover",
               mb: 3,
-              color: "var(--color-primary, #10b981)",
+              color: "text.secondary",
             }}>
               <FolderKanban size={48} strokeWidth={1.5} />
             </Box>
@@ -202,11 +204,13 @@ export default function ProjectsDashboardPage() {
               startIcon={<Plus size={16} />}
               onClick={() => setDialogOpen(true)}
               sx={{
-                borderRadius: 2,
+                borderRadius: 999,
                 textTransform: "none",
-                fontWeight: 700,
-                bgcolor: "var(--color-primary, #10b981)",
-                "&:hover": { bgcolor: "var(--color-primary-dark, #059669)" },
+                fontWeight: 600,
+                bgcolor: "var(--primary, #188038)",
+                "&:hover": { bgcolor: "var(--primary-strong, #115b27)" },
+                "&:active": { transform: "scale(0.97)" },
+                transition: "all 0.15s ease",
               }}
             >
               {t("projects.create")}
@@ -230,8 +234,8 @@ export default function ProjectsDashboardPage() {
                     py: 2.5,
                     borderRadius: 3,
                     border: "1px solid",
-                    borderColor: isActive ? "var(--color-primary, #10b981)" : "divider",
-                    bgcolor: isActive ? "rgba(16, 185, 129, 0.04)" : "background.paper",
+                    borderColor: isActive ? "var(--primary, #34a853)" : "divider",
+                    bgcolor: isActive ? "var(--state-layer-primary, rgba(52, 168, 83, 0.08))" : "background.paper",
                     cursor: isActive ? "default" : "pointer",
                     transition: "all 0.2s ease",
                     "&:hover": isActive ? {} : {
@@ -248,8 +252,8 @@ export default function ProjectsDashboardPage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    bgcolor: isActive ? "rgba(16, 185, 129, 0.12)" : "action.hover",
-                    color: isActive ? "var(--color-primary, #10b981)" : "text.secondary",
+                    bgcolor: isActive ? "var(--state-layer-primary, rgba(52, 168, 83, 0.12))" : "action.hover",
+                    color: isActive ? "var(--primary, #34a853)" : "text.secondary",
                     fontWeight: 800,
                     fontSize: "1.1rem",
                     flexShrink: 0,
@@ -264,7 +268,7 @@ export default function ProjectsDashboardPage() {
                         variant="subtitle2"
                         fontWeight={700}
                         noWrap
-                        sx={{ color: isActive ? "var(--color-primary, #10b981)" : "text.primary" }}
+                        sx={{ color: isActive ? "text.primary" : "text.primary" }}
                       >
                         {project.title}
                       </Typography>
@@ -275,11 +279,11 @@ export default function ProjectsDashboardPage() {
                           label={t("projects.activeBadge")}
                           sx={{
                             height: 20,
-                            fontSize: "0.65rem",
-                            fontWeight: 700,
-                            bgcolor: "rgba(16, 185, 129, 0.12)",
-                            color: "var(--color-primary, #10b981)",
-                            "& .MuiChip-icon": { color: "var(--color-primary, #10b981)" },
+                            fontSize: "0.6rem",
+                            fontWeight: 600,
+                            bgcolor: "var(--state-layer-primary, rgba(52, 168, 83, 0.12))",
+                            color: "var(--primary, #34a853)",
+                            "& .MuiChip-icon": { color: "var(--primary, #34a853)" },
                           }}
                         />
                       )}
@@ -317,8 +321,8 @@ export default function ProjectsDashboardPage() {
                         color: "text.secondary",
                         flexShrink: 0,
                         "&:hover": {
-                          borderColor: "var(--color-primary, #10b981)",
-                          color: "var(--color-primary, #10b981)",
+                          borderColor: "var(--primary, #34a853)",
+                          color: "var(--primary, #34a853)",
                         },
                       }}
                     >
@@ -381,11 +385,13 @@ export default function ProjectsDashboardPage() {
               disabled={submitting}
               endIcon={submitting ? <CircularProgress size={14} color="inherit" /> : null}
               sx={{
-                borderRadius: 2,
+                borderRadius: 999,
                 textTransform: "none",
-                fontWeight: 700,
-                bgcolor: "var(--color-primary, #10b981)",
-                "&:hover": { bgcolor: "var(--color-primary-dark, #059669)" },
+                fontWeight: 600,
+                bgcolor: "var(--primary, #188038)",
+                "&:hover": { bgcolor: "var(--primary-strong, #115b27)" },
+                "&:active": { transform: "scale(0.97)" },
+                transition: "all 0.15s ease",
               }}
             >
               {t("projects.dialog.submit")}

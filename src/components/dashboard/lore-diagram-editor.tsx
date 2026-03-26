@@ -79,8 +79,8 @@ export function LoreDiagramEditor({ initialData, onChange }: LoreDiagramEditorPr
   );
 
   const onSelectionChange = useCallback(({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
-    setSelectedNodes(nodes.map(n => n.id));
-    setSelectedEdges(edges.map(e => e.id));
+    setSelectedNodes((nodes ?? []).map(n => n.id));
+    setSelectedEdges((edges ?? []).map(e => e.id));
   }, []);
 
   const addNode = (type: string = 'default') => {
@@ -128,7 +128,7 @@ export function LoreDiagramEditor({ initialData, onChange }: LoreDiagramEditorPr
           <button
             type="button"
             onClick={() => addNode('input')}
-            className="px-3 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-md border border-emerald-200 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium bg-[var(--state-layer-primary)] text-[var(--primary)] hover:opacity-80 rounded-md border border-[var(--primary)]/20 transition-colors"
           >
             + Source
           </button>

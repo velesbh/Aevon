@@ -240,7 +240,9 @@ export default function DashboardLayout({
                   boxSizing: 'border-box', 
                   width: drawerWidth, 
                   transition: isDraggingSidebar ? 'none' : undefined,
-                  overflow: 'visible' 
+                  overflow: 'visible',
+                  borderRight: '1px solid',
+                  borderColor: 'divider',
                 },
               }}
               open
@@ -252,15 +254,18 @@ export default function DashboardLayout({
                 onMouseDown={handleSidebarMouseDown}
                 sx={{
                   position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '4px',
-                  height: '100%',
+                  top: '50%',
+                  right: -2,
+                  transform: 'translateY(-50%)',
+                  width: '3px',
+                  height: '40px',
                   cursor: 'col-resize',
-                  backgroundColor: isDraggingSidebar ? 'var(--color-primary)' : 'transparent',
+                  borderRadius: 4,
+                  backgroundColor: isDraggingSidebar ? 'var(--primary, #34a853)' : 'transparent',
                   zIndex: 9999,
+                  transition: 'background-color 0.15s ease',
                   '&:hover': {
-                    backgroundColor: 'var(--color-primary)',
+                    backgroundColor: 'var(--text-tertiary)',
                   }
                 }}
               />
@@ -287,9 +292,18 @@ export default function DashboardLayout({
               <IconButton 
                 size="small" 
                 onClick={() => setIsSidebarHidden(false)}
-                sx={{ bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', '&:hover': { bgcolor: 'action.hover' } }}
+                sx={{ 
+                  bgcolor: 'background.paper', 
+                  boxShadow: 'var(--elevation-1)', 
+                  border: '1px solid', 
+                  borderColor: 'divider', 
+                  borderRadius: 2.5,
+                  '&:hover': { bgcolor: 'action.hover' },
+                  '&:active': { transform: 'scale(0.95)' },
+                  transition: 'all 0.15s ease',
+                }}
               >
-                <MenuIcon size={18} />
+                <MenuIcon size={16} />
               </IconButton>
             </Box>
           )}
@@ -306,13 +320,13 @@ export default function DashboardLayout({
                 bgcolor: 'background.paper',
                 px: 1.5,
                 py: 0.75,
-                borderRadius: 4,
-                boxShadow: 3,
+                borderRadius: 3,
+                boxShadow: 'var(--elevation-2)',
                 border: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
               }}
             >
-              <RefreshCw className="animate-spin text-emerald-500" size={14} />
+              <RefreshCw className="animate-spin" size={14} style={{ color: 'var(--primary, #34a853)' }} />
             </Box>
           )}
           {children}

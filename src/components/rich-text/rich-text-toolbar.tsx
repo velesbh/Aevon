@@ -122,7 +122,7 @@ export function RichTextToolbar({ editor, onOpenImagePicker, className, variant 
           className={cn(
             "h-8 w-8 rounded-md",
             isActive(editor)
-              ? "bg-emerald-600/90 text-white hover:bg-emerald-500"
+              ? "bg-[var(--primary)] text-white hover:opacity-90"
               : "text-[var(--text-secondary)]",
           )}
           onClick={() => onClick(editor)}

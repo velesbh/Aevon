@@ -81,7 +81,10 @@ function getCharacterFormState(character: WorldElementRecord): CharacterFormStat
   try {
     const raw = (character.attributes as any)?.attached_lore;
     if (typeof raw === "string") {
-      attachedLoreIds = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        attachedLoreIds = parsed;
+      }
     }
   } catch {
     // ignore invalid json
@@ -125,7 +128,7 @@ const MaterialCard = ({
   >
     <Box sx={{ px: 3, py: 2, borderBottom: "1px solid", borderColor: "divider", display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <Stack direction="row" spacing={1.5} alignItems="center">
-        {Icon && <Icon size={18} className="text-emerald-500" />}
+        {Icon && <Icon size={18} className="text-[var(--text-secondary)]" />}
         <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", color: "text.primary" }}>
           {title}
         </Typography>
@@ -202,7 +205,14 @@ export function CharacterDetailsEditor({
     [worldElements, t, character?.project_id],
   );
 
-  const [form, setForm] = useState<CharacterFormState | null>(() => (character ? getCharacterFormState(character) : null));
+  const [form, setForm] = useState<CharacterFormState | null>(() => {
+    if (!character || !character.id) return null;
+    try {
+      return getCharacterFormState(character);
+    } catch {
+      return null;
+    }
+  });
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageActionLoading, setImageActionLoading] = useState(false);
@@ -217,8 +227,11 @@ export function CharacterDetailsEditor({
   const [variants, setVariants] = useState<Variant[]>(() => {
     try {
       const raw = (character?.attributes as any)?.variants;
-      return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   });
   const [variantImageLoading, setVariantImageLoading] = useState<Record<string, boolean>>({});
   const [variantUrls, setVariantUrls] = useState<Record<string, string>>({});
@@ -314,22 +327,44 @@ export function CharacterDetailsEditor({
 
   const isDirty = useMemo(() => {
     if (!character || !form) return false;
-    const baseline = getCharacterFormState(character);
-    return JSON.stringify(baseline) !== JSON.stringify(form);
+    try {
+      const baseline = getCharacterFormState(character);
+      return JSON.stringify(baseline) !== JSON.stringify(form);
+    } catch {
+      return false;
+    }
   }, [character, form]);
 
+  const prevCharacterIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
     if (!character) {
       setForm(null);
+      prevCharacterIdRef.current = null;
       return;
     }
-    const baseline = getCharacterFormState(character);
-    if (!form || (character && (character as any).id !== (form as any).id)) {
-      setForm(baseline);
+    
+    const currentCharacterId = character.id;
+    const isCharacterChanged = prevCharacterIdRef.current !== currentCharacterId;
+    
+    if (isCharacterChanged || !form) {
+      try {
+        const baseline = getCharacterFormState(character);
+        setForm(baseline);
+        prevCharacterIdRef.current = currentCharacterId;
+      } catch (error) {
+        console.error("Error setting form state:", error);
+        setForm(null);
+      }
     } else if (!isDirty && !saving) {
-      setForm(baseline);
+      try {
+        const baseline = getCharacterFormState(character);
+        setForm(baseline);
+      } catch (error) {
+        console.error("Error resetting form state:", error);
+      }
     }
-  }, [character, isDirty, saving, form]);
+  }, [character, isDirty, saving]);
 
   useEffect(() => {
     let active = true;
@@ -474,7 +509,7 @@ export function CharacterDetailsEditor({
             )}
           </AnimatePresence>
 
-          {saving && <RefreshCw size={16} className="text-emerald-500 animate-spin" />}
+          {saving && <RefreshCw size={16} className="text-[var(--primary)] animate-spin" />}
           {onDelete && (
             <IconButton color="error" onClick={() => void onDelete(character.id)} disabled={deleting} sx={{ border: "1px solid", borderColor: "divider" }}>
               {deleting ? <CircularProgress size={20} /> : <Trash2 size={18} />}

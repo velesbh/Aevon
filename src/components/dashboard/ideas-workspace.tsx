@@ -37,12 +37,12 @@ import { useLanguage } from "@/lib/i18n";
 
 function extractTags(text: string): string[] {
   const matches = text.match(/@(\w+)/g);
-  return matches ? [...new Set(matches.map((m) => m.slice(1)))] : [];
+  return matches ? [...new Set((matches ?? []).map((m) => m.slice(1)))] : [];
 }
 
 function renderTextWithTags(text: string) {
   const parts = text.split(/(@\w+)/g);
-  return parts.map((part, i) =>
+  return (parts ?? []).map((part, i) =>
     part.startsWith("@") ? (
       <span key={i} style={{ color: "var(--color-primary, #10b981)", fontWeight: 600 }}>
         {part}
@@ -199,7 +199,7 @@ export function IdeasWorkspace() {
                   }}
                 />
               )}
-              {allTags.slice(0, 6).map((tag) => (
+              {(allTags ?? []).slice(0, 6).map((tag) => (
                 <Chip
                   key={tag}
                   size="small"
@@ -239,7 +239,7 @@ export function IdeasWorkspace() {
             },
             gap: 2.5,
           }}>
-            {ideas.map((idea) => {
+            {(ideas ?? []).map((idea) => {
               const tags = extractTags(idea.description || "");
               return (
                 <Card 
@@ -301,7 +301,7 @@ export function IdeasWorkspace() {
 
                     {tags.length > 0 && (
                       <Stack direction="row" spacing={0.5} sx={{ mb: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
-                        {tags.slice(0, 3).map((tag) => (
+                        {(tags ?? []).slice(0, 3).map((tag) => (
                           <Chip
                             key={tag}
                             size="small"
@@ -431,7 +431,7 @@ export function IdeasWorkspace() {
           />
           {extractTags(composeText).length > 0 && (
             <Stack direction="row" spacing={0.5} sx={{ mt: 1.5, flexWrap: 'wrap', gap: 0.5 }}>
-              {extractTags(composeText).map((tag) => (
+              {(extractTags(composeText) ?? []).map((tag) => (
                 <Chip
                   key={tag}
                   size="small"

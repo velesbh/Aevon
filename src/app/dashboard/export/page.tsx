@@ -154,7 +154,7 @@ export default function ExportToolPage() {
       <Box sx={{ flex: 1, overflowY: "auto", py: { xs: 4, md: 8 }, px: { xs: 3, md: 6 }, maxWidth: 1280, width: "100%", mx: "auto" }}>
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-12">
           <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg border border-[var(--border-ui)]/50 bg-[var(--background-app)]">
-            <Download className="w-4 h-4 text-emerald-500" />
+            <Download className="w-4 h-4 text-[var(--text-secondary)]" />
             <span className="text-sm font-bold text-[var(--text-primary)]">Universal Export</span>
           </div>
           
@@ -171,7 +171,7 @@ export default function ExportToolPage() {
                 includeItems: true,
                 includeIdeas: true,
               })}
-              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-emerald-600/10 text-emerald-600 border border-emerald-600/20 hover:bg-emerald-600 hover:text-white transition-all"
+              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-[var(--state-layer-primary)] text-[var(--primary)] border border-[var(--primary)]/20 hover:bg-[var(--primary)] hover:text-white transition-all active:scale-[0.97]"
             >
               Export Everything
             </button>
@@ -187,7 +187,7 @@ export default function ExportToolPage() {
                  includeItems: false,
                  includeIdeas: false,
                })}
-              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-zinc-800 text-zinc-400 border border-zinc-700 hover:border-emerald-500 transition-all"
+              className="px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-[var(--background-app)] text-[var(--text-secondary)] border border-[var(--border-ui)] hover:border-[var(--border-ui-hover)] transition-all active:scale-[0.97]"
             >
               Manuscript Only
             </button>
@@ -199,7 +199,7 @@ export default function ExportToolPage() {
           <Grid size={{ xs: 12, lg: 6 }}>
             <Stack spacing={3}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <FileDown className="w-5 h-5" color="#10B981" />
+                <FileDown className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                 <Typography variant="overline" sx={{ letterSpacing: 4, color: "var(--text-tertiary)", fontWeight: 700 }}>
                   Select Format
                 </Typography>
@@ -209,11 +209,11 @@ export default function ExportToolPage() {
                 {formats.map((f) => {
                   const isActive = f.id === format;
                   return (
-                    <Card key={f.id} elevation={isActive ? 8 : 1} sx={{ borderRadius: 4, border: "2px solid", borderColor: isActive ? "rgba(16,185,129,0.7)" : "var(--border-ui)", bgcolor: isActive ? "rgba(16,185,129,0.08)" : "var(--background-app)" }}>
+                    <Card key={f.id} elevation={0} sx={{ borderRadius: 4, border: "1px solid", borderColor: isActive ? "var(--primary, #34a853)" : "var(--border-ui)", bgcolor: isActive ? "var(--state-layer-primary, rgba(52,168,83,0.06))" : "var(--background-app)", transition: "all 0.15s ease" }}>
                       <CardActionArea onClick={() => setFormat(f.id)} sx={{ borderRadius: 4 }}>
                         <CardContent sx={{ display: "flex", gap: 2.5, alignItems: "flex-start" }}>
-                          <Paper sx={{ p: 1.5, borderRadius: 3, bgcolor: isActive ? "rgba(16,185,129,0.15)" : "var(--background-surface)", border: "1px solid", borderColor: isActive ? "rgba(16,185,129,0.4)" : "var(--border-ui)" }}>
-                            <f.icon className="w-5 h-5" color={isActive ? "#10B981" : "var(--text-secondary)"} />
+                          <Paper elevation={0} sx={{ p: 1.5, borderRadius: 3, bgcolor: isActive ? "var(--state-layer-primary, rgba(52,168,83,0.12))" : "var(--background-surface)", border: "1px solid", borderColor: isActive ? "var(--primary, #34a853)" : "var(--border-ui)" }}>
+                            <f.icon className="w-5 h-5" style={{ color: isActive ? "var(--primary, #34a853)" : "var(--text-secondary)" }} />
                           </Paper>
                           <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: "var(--text-primary)" }}>
@@ -223,7 +223,7 @@ export default function ExportToolPage() {
                               {f.description}
                             </Typography>
                           </Box>
-                          {isActive && <CheckCircle2 className="w-5 h-5" color="#10B981" />}
+                          {isActive && <CheckCircle2 className="w-5 h-5" style={{ color: 'var(--primary, #34a853)' }} />}
                         </CardContent>
                       </CardActionArea>
                     </Card>
@@ -234,7 +234,7 @@ export default function ExportToolPage() {
               {options.includeManuscript && chapters && chapters.length > 0 && (
                 <>
                   <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 2 }}>
-                    <BookOpen className="w-5 h-5" color="#10B981" />
+                    <BookOpen className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                     <Typography variant="overline" sx={{ letterSpacing: 4, color: "var(--text-tertiary)", fontWeight: 700 }}>
                       Select Manuscripts
                     </Typography>
@@ -278,9 +278,9 @@ export default function ExportToolPage() {
                               else newSet.add(chapter.id);
                               setSelectedChapters(newSet);
                             }}
-                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-emerald-500 bg-emerald-500/10' : 'border-[var(--border-ui)] bg-[var(--background-surface)] hover:border-emerald-500/50'}`}
+                            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${isSelected ? 'border-[var(--primary)] bg-[var(--state-layer-primary)]' : 'border-[var(--border-ui)] bg-[var(--background-surface)] hover:border-[var(--border-ui-hover)]'}`}
                           >
-                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${isSelected ? 'border-emerald-500 bg-emerald-500' : 'border-[var(--text-tertiary)] bg-transparent'}`}>
+                            <div className={`w-5 h-5 rounded-full flex items-center justify-center border transition-colors ${isSelected ? 'border-[var(--primary)] bg-[var(--primary)]' : 'border-[var(--text-tertiary)] bg-transparent'}`}>
                               {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -304,7 +304,7 @@ export default function ExportToolPage() {
           <Grid size={{ xs: 12, lg: 6 }}>
             <Stack spacing={3}>
               <Stack direction="row" spacing={1} alignItems="center">
-                <Settings2 className="w-5 h-5" color="#10B981" />
+                <Settings2 className="w-5 h-5" style={{ color: 'var(--text-tertiary)' }} />
                 <Typography variant="overline" sx={{ letterSpacing: 4, color: "var(--text-tertiary)", fontWeight: 700 }}>
                   Export Options
                 </Typography>
@@ -410,35 +410,23 @@ export default function ExportToolPage() {
                 onClick={handleExport}
                 disabled={isExporting || !activeProjectId}
                 variant="contained"
-                color="success"
                 size="large"
                 startIcon={
                   isExporting ? <Loader2 className="w-5 h-5 animate-spin" /> : exportComplete ? <CheckCircle2 className="w-5 h-5" /> : <Download className="w-5 h-5" />
                 }
                 sx={{
-                  borderRadius: 4,
-                  py: 2,
-                  fontWeight: 900,
-                  letterSpacing: 3,
-                  textTransform: "uppercase",
-                  boxShadow: "0 20px 45px rgba(16,185,129,0.35)",
-                  position: "relative",
-                  overflow: "hidden",
+                  borderRadius: 999,
+                  py: 1.75,
+                  px: 4,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  bgcolor: "var(--primary, #188038)",
+                  "&:hover": { bgcolor: "var(--primary-strong, #115b27)" },
+                  "&:active": { transform: "scale(0.97)" },
+                  transition: "all 0.15s ease",
                 }}
               >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "linear-gradient(120deg, transparent, rgba(255,255,255,0.25), transparent)",
-                    transform: "translateX(-100%)",
-                    animation: "shimmer 2.5s infinite",
-                    opacity: isExporting ? 0.2 : 0.4,
-                  }}
-                />
-                <Typography component="span" variant="button" sx={{ position: "relative" }}>
-                  {isExporting ? "Exporting..." : exportComplete ? "Exported" : "Export Project"}
-                </Typography>
+                {isExporting ? "Exporting..." : exportComplete ? "Exported" : "Export Project"}
               </Button>
 
               {!activeProjectId && (

@@ -131,7 +131,7 @@ export function FileSelectorModal({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search uploaded images..."
-                className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-full py-2.5 pl-10 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-[var(--text-tertiary)]"
+                className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-full py-2.5 pl-10 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)]/50 focus:ring-2 focus:ring-[var(--primary)]/20 transition-all placeholder:text-[var(--text-tertiary)]"
               />
             </div>
             <input
@@ -165,7 +165,7 @@ export function FileSelectorModal({
                   fileInputRef.current?.click();
                 }
               }}
-              className="flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 text-sm font-bold tracking-wide transition-all shadow-md hover:shadow-lg shrink-0 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-full bg-[var(--primary)] hover:opacity-90 text-white px-5 py-2.5 text-sm font-bold tracking-wide transition-all active:scale-95 shadow-md shrink-0 disabled:opacity-50"
             >
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
               <span>{isUploading ? "Uploading..." : "Upload New"}</span>
@@ -174,9 +174,9 @@ export function FileSelectorModal({
 
           {/* Grid */}
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar min-h-[300px]">
-            {filteredFiles.length > 0 ? (
+            {(filteredFiles?.length ?? 0) > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {filteredFiles.map((file) => (
+                {(filteredFiles ?? []).map((file) => (
                   <button
                     key={file.id}
                     onClick={() => {
@@ -185,9 +185,8 @@ export function FileSelectorModal({
                     }}
                     className="group flex flex-col items-center gap-2 text-left"
                   >
-                    <div className="w-full aspect-square rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-surface)] overflow-hidden relative shadow-sm group-hover:shadow-md group-hover:border-emerald-500/50 transition-all duration-300">
+                    <div className="w-full aspect-square rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-surface)] overflow-hidden relative shadow-sm group-hover:shadow-md group-hover:border-[var(--border-ui-hover)] transition-all duration-300">
                       <FileThumbnail filePath={file.file_path} fileName={file.file_name} />
-                      <div className="absolute inset-0 bg-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                     <span className="text-xs font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] line-clamp-1 w-full text-center transition-colors">
                       {file.file_name}

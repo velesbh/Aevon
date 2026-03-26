@@ -94,7 +94,7 @@ export function FilePreviewModal({ file, onClose, onDelete, onDownload }: FilePr
           <div className="flex items-center justify-between p-6 border-b border-[var(--border-ui)]/50 shrink-0 bg-[var(--background-surface)]/80 backdrop-blur-md">
             <div className="flex items-center gap-4">
                <div className="p-3 rounded-2xl bg-[var(--background-surface)] border border-[var(--border-ui)] shadow-sm">
-                 {category === "image" ? <ImageIcon className="w-6 h-6 text-emerald-500" /> : <FileText className="w-6 h-6 text-emerald-500" />}
+                 {category === "image" ? <ImageIcon className="w-6 h-6 text-[var(--text-secondary)]" /> : <FileText className="w-6 h-6 text-[var(--text-secondary)]" />}
                </div>
                <div>
                  <h2 className="text-xl font-bold text-[var(--text-primary)] leading-tight">{file.file_name}</h2>
@@ -113,7 +113,7 @@ export function FilePreviewModal({ file, onClose, onDelete, onDownload }: FilePr
           <div className="flex-1 overflow-hidden relative flex items-center justify-center bg-[var(--background-surface)]/30">
             {loading ? (
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+                <Loader2 className="w-10 h-10 animate-spin text-[var(--primary)]" />
                 <p className="text-sm font-bold text-[var(--text-secondary)] tracking-widest uppercase">Loading Preview</p>
               </div>
             ) : category === "image" && url ? (
@@ -121,7 +121,7 @@ export function FilePreviewModal({ file, onClose, onDelete, onDownload }: FilePr
                 <img src={url} alt={file.file_name} className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" />
               </div>
             ) : textContent !== null ? (
-              <div className="w-full h-full p-8 md:p-12 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-950 font-mono text-[var(--text-primary)] whitespace-pre-wrap selection:bg-emerald-500/20 text-sm">
+              <div className="w-full h-full p-8 md:p-12 overflow-y-auto custom-scrollbar bg-white dark:bg-zinc-950 font-mono text-[var(--text-primary)] whitespace-pre-wrap selection:bg-[var(--primary)]/20 text-sm">
                 {textContent}
               </div>
             ) : (
@@ -158,7 +158,7 @@ export function FilePreviewModal({ file, onClose, onDelete, onDownload }: FilePr
                 Close
               </Button>
               <Button
-                className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg hover:shadow-emerald-500/25 font-bold px-8"
+                className="rounded-full bg-[var(--primary)] hover:opacity-90 text-white transition-all shadow-lg active:scale-95 font-bold px-8"
                 onClick={() => onDownload(file)}
               >
                 <Download className="w-4 h-4 mr-2" />

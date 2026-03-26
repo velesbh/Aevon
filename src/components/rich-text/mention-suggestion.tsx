@@ -130,9 +130,9 @@ function rankMentions(
   const normalizedQuery = query.trim().toLowerCase();
   const recents = readRecents(config.recentLimit);
   const recentsSet = new Set(recents);
-  const typeRanking = new Map(config.typeOrder.map((type, index) => [type, config.typeOrder.length - index]));
+  const typeRanking = new Map((config.typeOrder ?? []).map((type, index) => [type, (config.typeOrder ?? []).length - index]));
   const unique = new Map<string, MentionEntity>();
-  items.forEach((entity) => {
+  (items ?? []).forEach((entity) => {
     unique.set(entity.id, entity);
   });
 
@@ -226,11 +226,11 @@ function buildSections(
 
   const folderOrder = config.folderOrder ?? DEFAULT_FOLDER_GROUP_ORDER;
   const sortedBuckets = Array.from(folderBuckets.values()).sort((left, right) => {
-    const leftWeight = folderOrder.indexOf(left.category);
-    const rightWeight = folderOrder.indexOf(right.category);
+    const leftWeight = (folderOrder ?? []).indexOf(left.category);
+    const rightWeight = (folderOrder ?? []).indexOf(right.category);
     if (leftWeight !== rightWeight) {
-      return (leftWeight === -1 ? folderOrder.length : leftWeight) -
-        (rightWeight === -1 ? folderOrder.length : rightWeight);
+      return (leftWeight === -1 ? (folderOrder ?? []).length : leftWeight) -
+        (rightWeight === -1 ? (folderOrder ?? []).length : rightWeight);
     }
     return (left.section.folderName ?? left.section.title).localeCompare(right.section.folderName ?? right.section.title);
   });
@@ -362,11 +362,11 @@ export function createMentionSuggestion(
         onUpdate: (props) => {
           latestProps = props;
           cachedItems = props.items as MentionEntity[];
-          activeIndex = Math.min(activeIndex, Math.max(cachedItems.length - 1, 0));
+          activeIndex = Math.min(activeIndex, Math.max((cachedItems?.length ?? 0) - 1, 0));
           updateRenderer();
         },
         onKeyDown: (props) => {
-          if (!cachedItems.length) {
+          if (!(cachedItems?.length ?? 0)) {
             return false;
           }
           const event = props.event;
@@ -376,13 +376,13 @@ export function createMentionSuggestion(
           }
           if (["ArrowDown", "Tab"].includes(event.key)) {
             event.preventDefault();
-            activeIndex = (activeIndex + 1) % cachedItems.length;
+            activeIndex = (activeIndex + 1) % (cachedItems?.length ?? 1);
             updateRenderer();
             return true;
           }
           if (event.key === "ArrowUp") {
             event.preventDefault();
-            activeIndex = (activeIndex - 1 + cachedItems.length) % cachedItems.length;
+            activeIndex = (activeIndex - 1 + (cachedItems?.length ?? 1)) % (cachedItems?.length ?? 1);
             updateRenderer();
             return true;
           }
@@ -390,7 +390,7 @@ export function createMentionSuggestion(
             event.preventDefault();
             const item = cachedItems[activeIndex];
             if (item) {
-              props.command?.(item as MentionNodeAttrs);
+              latestProps?.command?.(item as MentionNodeAttrs);
             }
             return true;
           }
@@ -546,7 +546,7 @@ function MentionDropdown({ clientRect, query, sections, activeIndex, totalResult
     </div>
   ) : (
     <div className="px-4 py-8 text-center text-sm text-[var(--text-secondary)]">
-      {query ? t("mention.dropdown.noResults", { query }) || `No matches for @${query}` : t("mention.dropdown.start", { defaultValue: "Start typing to discover entries" })}
+      {query ? t("mention.dropdown.noResults") || `No matches for @${query}` : t("mention.dropdown.start") || "Start typing to discover entries"}
     </div>
   );
 
@@ -572,7 +572,7 @@ function MentionDropdown({ clientRect, query, sections, activeIndex, totalResult
           </div>
           {content}
           <div className="flex items-center justify-between border-t border-[var(--border-ui)]/60 px-4 py-2 text-[11px] text-[var(--text-tertiary)]">
-            <span>{t("mention.dropdown.results", { count: totalResults }) || `${totalResults} results`}</span>
+            <span>{t("mention.dropdown.results") || `${totalResults} results`}</span>
             <span className="flex items-center gap-2">
               <kbd className="rounded-md border border-[var(--border-ui)] px-1.5 py-0.5 text-[10px]">↑↓</kbd>
               {t("mention.dropdown.navigate") || "Navigate"}

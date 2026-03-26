@@ -84,11 +84,11 @@ function FileTypeIcon({ file, size = 48 }: { file: FileRecord; size?: number }) 
   const iconProps = { size, strokeWidth: 1.7 };
 
   if (category === "image") {
-    return <ImageIcon {...iconProps} color="var(--emerald-500, #10B981)" />;
+    return <ImageIcon {...iconProps} color="var(--primary, #34a853)" />;
   }
 
   if (category === "document") {
-    return <FileTextIcon {...iconProps} color="var(--emerald-400, #34D399)" />;
+    return <FileTextIcon {...iconProps} color="var(--text-secondary)" />;
   }
 
   return <FileIcon {...iconProps} color="var(--text-tertiary)" />;
@@ -369,16 +369,16 @@ export default function FileManagerPage() {
                 justifyContent: "space-between",
                 px: { xs: 3, md: 4 },
                 borderBottom: "1px solid",
-                borderColor: "rgba(16,185,129,0.4)",
-                bgcolor: "rgba(16,185,129,0.08)",
+                borderColor: "divider",
+                bgcolor: "var(--state-layer-primary, rgba(52, 168, 83, 0.08))",
                 minHeight: 64,
               }}
             >
               <Stack direction="row" spacing={2} alignItems="center">
-                <Typography variant="body2" sx={{ fontWeight: 700, color: "var(--emerald-500, #10B981)" }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, color: "var(--primary, #34a853)" }}>
                   {selectedFiles.size} selected
                 </Typography>
-                <Button variant="text" color="success" size="small" onClick={() => setSelectedFiles(new Set())} sx={{ fontWeight: 700, letterSpacing: 1 }}>
+                <Button variant="text" size="small" onClick={() => setSelectedFiles(new Set())} sx={{ fontWeight: 600, letterSpacing: 1, color: "text.secondary" }}>
                   Clear
                 </Button>
               </Stack>
@@ -389,7 +389,7 @@ export default function FileManagerPage() {
                   size="small"
                   onClick={handleBulkDownload}
                   startIcon={<Download className="w-4 h-4" />}
-                  sx={{ borderRadius: 999, textTransform: "uppercase", fontSize: 12, letterSpacing: 1 }}
+                  sx={{ borderRadius: 999, textTransform: "none", fontSize: 12, fontWeight: 600, borderColor: "divider", color: "text.secondary" }}
                 >
                   Download
                 </Button>
@@ -402,7 +402,7 @@ export default function FileManagerPage() {
                   startIcon={
                     isBulkDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />
                   }
-                  sx={{ borderRadius: 999, textTransform: "uppercase", fontSize: 12, letterSpacing: 1 }}
+                  sx={{ borderRadius: 999, textTransform: "none", fontSize: 12, fontWeight: 600 }}
                 >
                   Delete
                 </Button>
@@ -420,7 +420,7 @@ export default function FileManagerPage() {
           minHeight: 0,
           position: "relative",
           transition: "background-color 150ms ease",
-          bgcolor: isDragging ? "rgba(16,185,129,0.05)" : "transparent",
+          bgcolor: isDragging ? "var(--state-layer-primary, rgba(52,168,83,0.04))" : "transparent",
         }}
         onDragOver={(event) => {
           event.preventDefault();
@@ -438,15 +438,15 @@ export default function FileManagerPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              border: "2px dashed rgba(16,185,129,0.8)",
+              border: "2px dashed var(--primary, #34a853)",
               borderRadius: 6,
               m: { xs: 2, md: 4 },
-              bgcolor: "rgba(16,185,129,0.08)",
+              bgcolor: "var(--state-layer-primary, rgba(52,168,83,0.06))",
               backdropFilter: "blur(4px)",
             }}
           >
             <Stack spacing={1} alignItems="center" textAlign="center" sx={{ p: { xs: 4, md: 6 }, bgcolor: "var(--background-surface)", borderRadius: 4, boxShadow: "0 25px 50px rgba(0,0,0,0.3)" }}>
-              <UploadCloud className="w-12 h-12" color="#10B981" />
+              <UploadCloud className="w-12 h-12" style={{ color: 'var(--primary, #34a853)' }} />
               <Typography variant="h5" sx={{ fontWeight: 800, color: "var(--text-primary)" }}>
                 Drop files here
               </Typography>
@@ -472,7 +472,7 @@ export default function FileManagerPage() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 w-full px-4 mb-4">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--border-ui)]/50 bg-[var(--background-surface)]">
-                <ImageIcon className="w-4 h-4 text-emerald-500" />
+                <ImageIcon className="w-4 h-4 text-[var(--text-secondary)]" />
                 <span className="text-sm font-bold text-[var(--text-primary)]">Files</span>
               </div>
               
@@ -481,7 +481,7 @@ export default function FileManagerPage() {
                   <motion.div 
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="flex items-center gap-3 text-xs font-bold text-emerald-500"
+                    className="flex items-center gap-3 text-xs font-bold text-[var(--primary)]"
                   >
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>UPLOADING {uploadProgress}%</span>
@@ -498,7 +498,7 @@ export default function FileManagerPage() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder="Search files..."
-                  className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-full py-2 pl-12 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-full py-2 pl-12 pr-4 text-sm font-medium text-[var(--text-primary)] outline-none focus:border-[var(--primary)]/50 transition-all"
                 />
               </div>
               
@@ -518,7 +518,7 @@ export default function FileManagerPage() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-lg active:scale-95 shrink-0"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--primary)] hover:opacity-90 text-white transition-all active:scale-95 shrink-0"
               >
                 <Plus className="w-5 h-5" />
               </button>
@@ -539,7 +539,7 @@ export default function FileManagerPage() {
             <Tooltip title="Gallery view">
               <IconButton
                 onClick={() => setViewMode("gallery")}
-                color={viewMode === "gallery" ? "success" : "default"}
+                color={viewMode === "gallery" ? "primary" : "default"}
                 sx={{
                   bgcolor: viewMode === "gallery" ? "var(--background-surface)" : "transparent",
                   borderRadius: "999px",
@@ -551,7 +551,7 @@ export default function FileManagerPage() {
             <Tooltip title="Grid view">
               <IconButton
                 onClick={() => setViewMode("grid")}
-                color={viewMode === "grid" ? "success" : "default"}
+                color={viewMode === "grid" ? "primary" : "default"}
                 sx={{
                   bgcolor: viewMode === "grid" ? "var(--background-surface)" : "transparent",
                   borderRadius: "999px",
@@ -563,7 +563,7 @@ export default function FileManagerPage() {
             <Tooltip title="List view">
               <IconButton
                 onClick={() => setViewMode("list")}
-                color={viewMode === "list" ? "success" : "default"}
+                color={viewMode === "list" ? "primary" : "default"}
                 sx={{
                   bgcolor: viewMode === "list" ? "var(--background-surface)" : "transparent",
                   borderRadius: "999px",
@@ -577,7 +577,7 @@ export default function FileManagerPage() {
 
         {loading ? (
           <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Loader2 className="h-8 w-8 animate-spin" color="#10B981" />
+            <Loader2 className="h-8 w-8 animate-spin" style={{ color: 'var(--primary, #34a853)' }} />
           </Box>
         ) : filteredFiles.length === 0 ? (
           <Stack spacing={2} alignItems="center" justifyContent="center" textAlign="center" sx={{ flex: 1, p: { xs: 4, md: 8 } }}>
@@ -615,20 +615,20 @@ export default function FileManagerPage() {
                           aspectRatio: "1/1",
                           cursor: "pointer",
                           border: "1px solid",
-                          borderColor: isSelected ? "var(--emerald-500, #10B981)" : "var(--border-ui)/20",
+                          borderColor: isSelected ? "var(--primary, #34a853)" : "transparent",
                           bgcolor: "var(--background-surface)",
                           transition: "all 500ms cubic-bezier(0.2, 0.8, 0.2, 1)",
                           "&:hover": {
-                            borderColor: "var(--emerald-500, #10B981)",
-                            transform: "translateY(-6px)",
-                            boxShadow: "0 40px 80px -15px rgba(0,0,0,0.6)",
+                            borderColor: "var(--border-ui-hover)",
+                            transform: "translateY(-4px)",
+                            boxShadow: "var(--elevation-2)",
                           },
                           "&::after": {
                             content: '""',
                             position: "absolute",
                             inset: 0,
                             borderRadius: 'inherit',
-                            boxShadow: isSelected ? "inset 0 0 0 2px var(--emerald-500)" : "none",
+                            boxShadow: isSelected ? "inset 0 0 0 2px var(--primary, #34a853)" : "none",
                             pointerEvents: "none",
                             zIndex: 3
                           }
@@ -679,10 +679,10 @@ export default function FileManagerPage() {
                           <IconButton 
                             size="small" 
                             sx={{ 
-                              bgcolor: isSelected ? "var(--emerald-500, #10B981)" : "rgba(0,0,0,0.4)",
+                              bgcolor: isSelected ? "var(--primary, #34a853)" : "rgba(0,0,0,0.4)",
                               color: "white",
                               backdropFilter: "blur(4px)",
-                              "&:hover": { bgcolor: isSelected ? "var(--emerald-600)" : "rgba(0,0,0,0.6)" }
+                              "&:hover": { bgcolor: isSelected ? "var(--primary-strong, #188038)" : "rgba(0,0,0,0.6)" }
                             }}
                           >
                             {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
@@ -741,17 +741,17 @@ export default function FileManagerPage() {
                           display: "flex",
                           flexDirection: "column",
                           border: "1px solid",
-                          borderColor: isSelected ? "var(--emerald-500, #10B981)" : "var(--border-ui)",
-                          bgcolor: isSelected ? "rgba(16,185,129,0.06)" : "var(--background-app)",
+                          borderColor: isSelected ? "var(--primary, #34a853)" : "var(--border-ui)",
+                          bgcolor: isSelected ? "var(--state-layer-primary, rgba(52,168,83,0.06))" : "var(--background-app)",
                           transition: "all 150ms ease",
                           overflow: "hidden",
                           "&:hover": {
-                            borderColor: "var(--emerald-500, #10B981)",
-                            boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+                            borderColor: "var(--border-ui-hover)",
+                            boxShadow: "var(--elevation-1)",
                           },
                         }}
                       >
-                        <Box sx={{ position: "absolute", top: 12, left: 12, zIndex: 10, color: isSelected ? "var(--emerald-500, #10B981)" : "var(--text-tertiary)" }}>
+                        <Box sx={{ position: "absolute", top: 12, left: 12, zIndex: 10, color: isSelected ? "var(--primary, #34a853)" : "var(--text-tertiary)" }}>
                           {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                         </Box>
 
@@ -765,7 +765,7 @@ export default function FileManagerPage() {
                                display: "flex",
                                alignItems: "center",
                                justifyContent: "center",
-                               bgcolor: "rgba(16,185,129,0.1)",
+                               bgcolor: "var(--state-layer-neutral, rgba(0,0,0,0.04))",
                                opacity: 0,
                                transition: "opacity 150ms ease",
                                ".group:hover &": { opacity: 1 },
@@ -844,11 +844,11 @@ export default function FileManagerPage() {
                         py: { xs: 1.5, md: 2 },
                         gap: 2,
                         cursor: "pointer",
-                        bgcolor: isSelected ? "rgba(16,185,129,0.05)" : "transparent",
+                        bgcolor: isSelected ? "var(--state-layer-primary, rgba(52,168,83,0.05))" : "transparent",
                         borderTop: index === 0 ? "none" : "1px solid var(--border-ui)",
                         transition: "background-color 120ms ease",
                         "&:hover": {
-                          bgcolor: "color-mix(in srgb, var(--background-surface), rgba(16,185,129,0.05))",
+                          bgcolor: "action.hover",
                         },
                       }}
                     >
@@ -859,7 +859,7 @@ export default function FileManagerPage() {
                             event.stopPropagation();
                             toggleSelection(file.id);
                           }}
-                          sx={{ color: isSelected ? "var(--emerald-500, #10B981)" : "var(--text-tertiary)" }}
+                          sx={{ color: isSelected ? "var(--primary, #34a853)" : "var(--text-tertiary)" }}
                         >
                           {isSelected ? <CheckSquare className="w-4 h-4" /> : <Square className="w-4 h-4" />}
                         </IconButton>

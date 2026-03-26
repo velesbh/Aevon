@@ -86,7 +86,7 @@ export function InteractiveMap({
       ) : (
          /* Placeholder handled by parent usually, but fallback here */
         <div className="flex h-full w-full flex-col items-center justify-center gap-3 p-10 text-center opacity-50">
-          <MapPin className="h-10 w-10 text-emerald-500/60" />
+          <MapPin className="h-10 w-10 text-[var(--primary)]/60" />
         </div>
       )}
 
@@ -96,7 +96,7 @@ export function InteractiveMap({
       {/* Pins Layer */}
       <AnimatePresence>
         {imageUrl &&
-          waypoints.map((waypoint) => {
+          (waypoints ?? []).map((waypoint) => {
             const isSelected = selectedWaypointId === waypoint.id;
             const isHovered = hoveredWaypointId === waypoint.id;
 
@@ -129,16 +129,16 @@ export function InteractiveMap({
                     className={cn(
                       "h-8 w-8 drop-shadow-md transition-colors",
                       isSelected
-                        ? "fill-emerald-500 text-emerald-900"
-                        : "fill-emerald-500/80 text-white/90 hover:fill-emerald-400",
+                        ? "fill-[var(--primary)] text-[var(--primary)]"
+                        : "fill-[var(--primary)]/80 text-white/90 hover:opacity-80",
                     )}
                   />
                   
                   {/* Ripple effect for selected pin */}
                   {isSelected && (
                     <span className="absolute left-1/2 top-full -translate-x-1/2 -translate-y-1/2 flex h-3 w-3">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--primary)] opacity-75"></span>
+                      <span className="relative inline-flex h-3 w-3 rounded-full bg-[var(--primary)]"></span>
                     </span>
                   )}
 
@@ -147,7 +147,7 @@ export function InteractiveMap({
                     className={cn(
                       "absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded-md px-2 py-1 text-xs font-bold text-white shadow-lg backdrop-blur-md transition-all",
                       isSelected
-                        ? "bg-emerald-600 opacity-100"
+                        ? "bg-[var(--primary)] opacity-100"
                         : "bg-black/60 opacity-0 group-hover:opacity-100",
                     )}
                   >
@@ -155,7 +155,7 @@ export function InteractiveMap({
                     {/* Arrow down */}
                     <div className={cn(
                         "absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent",
-                        isSelected ? "border-t-emerald-600" : "border-t-black/60"
+                        isSelected ? "border-t-[var(--primary)]" : "border-t-black/60"
                     )} />
                   </div>
                 </button>

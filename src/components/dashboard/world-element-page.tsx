@@ -60,7 +60,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const filteredElements = useMemo(() => {
-    return worldElements.filter((element) => {
+    return (worldElements ?? []).filter((element) => {
       if (element.type !== type) {
         return false;
       }
@@ -89,7 +89,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
     Pick<WorldElementRecord, "name" | "description"> & { attributes: { [key: string]: string } }
   > | null>(null);
   const mentionEntities: MentionEntity[] = useMemo(() => {
-    return worldElements
+    return (worldElements ?? [])
       .filter((el) => ["character", "location", "item", "lore"].includes(el.type))
       .map((element) => ({
         id: element.id,
@@ -266,7 +266,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
   if (loading) {
     return (
       <div className="flex flex-1 min-h-0 items-center justify-center bg-[var(--background-surface)]">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -322,16 +322,15 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                       key={element.id}
                       onClick={() => handleSelectElement(element.id)}
                       className={cn(
-                        "group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-surface)] overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-200 relative",
+                        "group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-surface)] overflow-hidden shadow-sm hover:shadow-md hover:border-[var(--border-ui-hover)] transition-all duration-200 relative",
                         viewMode === "grid" ? "h-[280px]" : "h-auto py-4 px-6 flex-row items-center gap-4"
                       )}
                     >
                       {viewMode === "grid" ? (
                         <>
                           <div className="h-32 bg-[var(--background-app)] border-b border-[var(--border-ui)]/50 flex items-center justify-center relative overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             {getAttributeText(element.attributes, "map_image_url") ? (
-                              <ImageIcon className="w-8 h-8 text-emerald-500/50 transition-transform duration-300" />
+                              <ImageIcon className="w-8 h-8 text-[var(--text-tertiary)] opacity-50 transition-transform duration-300" />
                             ) : (
                               <ImageIcon className="w-8 h-8 text-[var(--text-tertiary)] opacity-30 group-hover:scale-110 transition-transform duration-300" />
                             )}
@@ -339,11 +338,11 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                           
                           <div className="p-5 flex flex-col flex-1">
                             <div className="flex items-start justify-between mb-2">
-                              <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                              <span className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--background-app)] px-2 py-0.5 rounded-md border border-[var(--border-ui)]">
                                 {getAttributeText(element.attributes, metaKey) || t("world.uncategorized")}
                               </span>
                             </div>
-                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 transition-colors">
                               {element.name || t("world.entry.untitled")}
                             </h3>
                             <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed flex-1">
@@ -354,14 +353,14 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                       ) : (
                         <>
                           <div className="w-12 h-12 rounded-xl bg-[var(--background-app)] flex items-center justify-center shrink-0 border border-[var(--border-ui)]/50">
-                            <Icon className="w-6 h-6 text-emerald-500" />
+                            <Icon className="w-6 h-6 text-[var(--text-tertiary)]" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-base font-bold text-[var(--text-primary)] truncate group-hover:text-emerald-600 transition-colors">
+                              <h3 className="text-base font-bold text-[var(--text-primary)] truncate transition-colors">
                                 {element.name || t("world.entry.untitled")}
                               </h3>
-                              <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                              <span className="text-[10px] font-medium text-[var(--text-secondary)] bg-[var(--background-app)] px-2 py-0.5 rounded-full border border-[var(--border-ui)]">
                                 {getAttributeText(element.attributes, metaKey) || t("world.uncategorized")}
                               </span>
                             </div>
@@ -395,7 +394,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
               <div className="w-full max-w-4xl flex items-center justify-between mb-6 px-4">
                 <button
                   onClick={() => handleSelectElement(null)}
-                  className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-emerald-500 transition-colors"
+                  className="flex items-center gap-2 text-sm font-bold text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>{title}</span>
@@ -424,7 +423,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-6">
                         <label className="block group">
-                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-emerald-500 transition-colors">
+                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-[var(--primary)] transition-colors">
                             {t("world.entry.name_label")}
                           </span>
                           <input
@@ -432,12 +431,12 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                             value={entryDraft.name}
                             onChange={(e) => handleFieldChange("name", e.target.value)}
                             placeholder={t("world.entry.name_placeholder")}
-                            className="w-full bg-transparent border-b-2 border-[var(--border-ui)] py-2 text-2xl font-bold text-[var(--text-primary)] outline-none focus:border-emerald-500 transition-all placeholder:text-[var(--text-tertiary)]/30"
+                            className="w-full bg-transparent border-b-2 border-[var(--border-ui)] py-2 text-2xl font-bold text-[var(--text-primary)] outline-none focus:border-[var(--primary)] transition-all placeholder:text-[var(--text-tertiary)]/30"
                           />
                         </label>
 
                         <label className="block group">
-                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-emerald-500 transition-colors">
+                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-[var(--primary)] transition-colors">
                             {metaLabel}
                           </span>
                           <input
@@ -445,14 +444,14 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                             value={entryDraft.attributes?.[metaKey] || ""}
                             onChange={(e) => handleAttributeChange(metaKey, e.target.value)}
                             placeholder={t("world.entry.type_placeholder")}
-                            className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-emerald-500/50 transition-all"
+                            className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)]/50 transition-all"
                           />
                         </label>
                       </div>
 
                       <div className="space-y-6">
                         <label className="block group">
-                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-emerald-500 transition-colors">
+                          <span className="mb-2 block text-xs font-bold uppercase tracking-widest text-[var(--text-tertiary)] group-focus-within:text-[var(--primary)] transition-colors">
                             {t("world.entry.attached_lore")}
                           </span>
                           <LoreAttachmentPicker
@@ -492,7 +491,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                           <button
                             type="button"
                             onClick={() => setSelectorOpen(true)}
-                            className="text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+                            className="text-xs font-bold text-[var(--primary)] hover:opacity-80 transition-colors"
                           >
                             {t("world.map.select_workspace")}
                           </button>
@@ -500,7 +499,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                           <label className="block group">
-                            <span className="mb-2 block text-xs font-bold tracking-wide text-[var(--text-tertiary)] group-focus-within:text-emerald-500 transition-colors">
+                            <span className="mb-2 block text-xs font-bold tracking-wide text-[var(--text-tertiary)] group-focus-within:text-[var(--primary)] transition-colors">
                               {t("world.map.url_label")}
                             </span>
                             <input
@@ -508,7 +507,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                               value={entryDraft.attributes?.map_image_url || ""}
                               onChange={(e) => handleAttributeChange("map_image_url", e.target.value)}
                               placeholder={t("world.map.url_placeholder")}
-                              className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-emerald-500/50 transition-all shadow-sm"
+                              className="w-full bg-[var(--background-app)] border border-[var(--border-ui)] rounded-xl px-4 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-[var(--primary)]/50 transition-all shadow-sm"
                             />
                           </label>
 
@@ -531,18 +530,24 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                                         note: t("world.waypoint.new")
                                       };
                                       
-                                      const waypoints = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                                      const waypoints = (() => {
+                                        const parsed = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                                        return Array.isArray(parsed) ? parsed : [];
+                                      })();
                                       handleAttributeChange("waypoints", JSON.stringify([...waypoints, newWaypoint]));
                                       setSelectedWaypointId(newWaypoint.id);
                                     }}
                                   />
                                   {(() => {
                                     try {
-                                      const waypoints: Waypoint[] = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                                      const waypoints: Waypoint[] = (() => {
+                                        const parsed = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                                        return Array.isArray(parsed) ? parsed : [];
+                                      })();
                                       return waypoints.map(wp => (
                                         <button
                                           key={wp.id}
-                                          className="absolute w-6 h-6 -ml-3 -mt-3 text-emerald-500 hover:text-emerald-400 drop-shadow-md transition-transform hover:scale-125 focus:outline-none z-10"
+                                          className="absolute w-6 h-6 -ml-3 -mt-3 text-[var(--primary)] hover:opacity-80 drop-shadow-md transition-transform hover:scale-125 focus:outline-none z-10"
                                           style={{ left: `${wp.x}%`, top: `${wp.y}%` }}
                                           onClick={(e) => {
                                             e.stopPropagation();
@@ -550,7 +555,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                                           }}
                                           title={wp.note}
                                         >
-                                          <MapPin className="w-full h-full fill-emerald-500/20" />
+                                          <MapPin className="w-full h-full fill-[var(--primary)]/20" />
                                         </button>
                                       ));
                                     } catch {
@@ -565,14 +570,17 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
 
                         {selectedWaypointId && (() => {
                           try {
-                            const waypoints: Waypoint[] = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                            const waypoints: Waypoint[] = (() => {
+                              const parsed = entryDraft.attributes?.waypoints ? JSON.parse(entryDraft.attributes.waypoints) : [];
+                              return Array.isArray(parsed) ? parsed : [];
+                            })();
                             const wp = waypoints.find(w => w.id === selectedWaypointId);
                             if (!wp) return null;
                             
                             return (
                               <div className="bg-[var(--background-app)] p-4 rounded-2xl border border-[var(--border-ui)] shadow-sm space-y-3 animate-in fade-in slide-in-from-top-2">
                                 <div className="flex justify-between items-center">
-                                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-tighter">{t("world.waypoint.note_label")}</span>
+                                  <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-tighter">{t("world.waypoint.note_label")}</span>
                                   <button onClick={() => setSelectedWaypointId(null)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
                                     <X className="w-4 h-4" />
                                   </button>
@@ -583,7 +591,7 @@ export function WorldElementPage({ type, title, icon: Icon, metaKey, metaLabel, 
                                     const newWaypoints = waypoints.map(w => w.id === wp.id ? { ...w, note: e.target.value } : w);
                                     handleAttributeChange("waypoints", JSON.stringify(newWaypoints));
                                   }}
-                                  className="w-full text-sm bg-transparent border-b border-[var(--border-ui)] p-0 text-[var(--text-primary)] focus:border-emerald-500 outline-none resize-none"
+                                  className="w-full text-sm bg-transparent border-b border-[var(--border-ui)] p-0 text-[var(--text-primary)] focus:border-[var(--primary)] outline-none resize-none"
                                   rows={2}
                                   autoFocus
                                 />

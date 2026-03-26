@@ -34,7 +34,7 @@ export function setInstantTheme(theme: string) {
 export function useInstantTheme() {
   const { setTheme, resolvedTheme } = useNextTheme()
   const [instantTheme, setInstantThemeState] = useState<string | undefined>(undefined)
-  const lastApplied = useRef<string | undefined>()
+  const lastApplied = useRef<string | undefined>(undefined)
 
   const setInstant = useCallback(
     (theme: string) => {

@@ -87,7 +87,7 @@ export function QuickScratchpad({ project }: QuickScratchpadProps) {
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           {status === "saving" ? (
-            <Cloud size={16} className="text-emerald-400 animate-pulse" />
+            <Cloud size={16} className="text-[var(--primary)] animate-pulse" />
           ) : status === "saved" ? (
             <Tooltip title={t("dash.scratchpad.saved")}>
               <Check size={16} className="text-green-500" />

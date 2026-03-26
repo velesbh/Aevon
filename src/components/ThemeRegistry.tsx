@@ -6,30 +6,28 @@ import { ThemeProvider, CssBaseline, createTheme, responsiveFontSizes } from '@m
 import type { ThemeOptions } from '@mui/material/styles';
 import { useTheme as useNextTheme } from 'next-themes';
 
-const brandGreen = '#188038'; // Google Green
-
 function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
   const isDark = mode === 'dark';
 
   const basePalette = {
     primary: {
-      main: isDark ? '#34a853' : '#188038', // Google Green
+      main: isDark ? '#34a853' : '#188038',
       dark: isDark ? '#188038' : '#115b27',
       light: isDark ? '#53b76f' : '#34a853',
       contrastText: '#ffffff',
     },
     secondary: {
-      main: isDark ? '#d1fae5' : '#064e3b',
+      main: isDark ? '#a0a4ab' : '#5f6368',
     },
     background: {
-      default: isDark ? '#050607' : '#f5f7f6',
-      paper: isDark ? '#0f1115' : '#ffffff',
+      default: isDark ? '#0c0d10' : '#f8f9fa',
+      paper: isDark ? '#131518' : '#ffffff',
     },
     text: {
-      primary: isDark ? '#f4f7f5' : '#0a0d0c',
-      secondary: isDark ? '#a5b2af' : '#4b625b',
+      primary: isDark ? '#e8e9eb' : '#111214',
+      secondary: isDark ? '#8b8f96' : '#5f6368',
     },
-    divider: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'
+    divider: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
   } as const;
 
   return {
@@ -38,7 +36,7 @@ function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
       ...basePalette,
     },
     shape: {
-      borderRadius: 14,
+      borderRadius: 12,
     },
     typography: {
       fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
@@ -53,28 +51,32 @@ function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
             textTransform: 'none',
             borderRadius: 999,
             paddingInline: 20,
+            transition: 'all 0.15s ease',
           },
         },
       },
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: 24,
+            borderRadius: 16,
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            backgroundImage: 'none',
           },
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: 24,
+            borderRadius: 16,
+            backgroundImage: 'none',
           },
         },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: 28,
+            borderRadius: 20,
+            backgroundImage: 'none',
           },
         },
       },
@@ -88,7 +90,29 @@ function buildTheme(mode: 'light' | 'dark'): ThemeOptions {
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            borderRadius: 12,
+            borderRadius: 10,
+            transition: 'all 0.15s ease',
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            transition: 'all 0.15s ease',
+          },
+        },
+      },
+      MuiChip: {
+        styleOverrides: {
+          root: {
+            fontWeight: 600,
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundImage: 'none',
           },
         },
       },

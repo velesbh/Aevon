@@ -102,17 +102,17 @@ interface DashboardWorkspaceContextValue {
 const DashboardWorkspaceContext = createContext<DashboardWorkspaceContextValue | null>(null);
 
 function sortChapters(chapters: ChapterRecord[]) {
-  return [...chapters].sort((left, right) => left.order_index - right.order_index);
+  return [...(chapters ?? [])].sort((left, right) => left.order_index - right.order_index);
 }
 
 function sortFiles(files: FileRecord[]) {
-  return [...files].sort(
+  return [...(files ?? [])].sort(
     (left, right) => new Date(right.created_at).getTime() - new Date(left.created_at).getTime(),
   );
 }
 
 function sortProjects(projects: ProjectRecord[]) {
-  return [...projects].sort(
+  return [...(projects ?? [])].sort(
     (left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime(),
   );
 }
@@ -303,7 +303,7 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
         current
           ? {
               ...current,
-              chapters: current.chapters.map((chapter) =>
+              chapters: (current.chapters ?? []).map((chapter) =>
                 chapter.id === updatedChapter.id ? updatedChapter : chapter,
               ),
             }
@@ -342,7 +342,7 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
 
         setWorkspace((current) => {
           if (!current) return current;
-          if (current.files.some(f => f.id === uploadedFile.id)) return current;
+          if ((current.files ?? []).some(f => f.id === uploadedFile.id)) return current;
           return {
             ...current,
             files: sortFiles([uploadedFile, ...current.files]),
@@ -401,10 +401,10 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           current
             ? {
                 ...current,
-                files: current.files.filter((file) => file.id !== existingFile.id),
+                files: (current.files ?? []).filter((file) => file.id !== existingFile.id),
                 profile: applyStorageDelta(current.profile, -existingFile.file_size),
                 worldElements: updatedCharacter
-                  ? current.worldElements.map((element) =>
+                  ? (current.worldElements ?? []).map((element) =>
                       element.id === updatedCharacter.id ? updatedCharacter : element,
                     )
                   : current.worldElements,
@@ -507,7 +507,7 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           current
             ? {
                 ...current,
-                worldElements: current.worldElements.map((element) =>
+                worldElements: (current.worldElements ?? []).map((element) =>
                   element.id === updatedElement.id ? updatedElement : element,
                 ),
               }
@@ -599,12 +599,12 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           current
             ? {
                 ...current,
-                worldElements: current.worldElements.map((element) =>
+                worldElements: (current.worldElements ?? []).map((element) =>
                   element.id === updatedCharacter.id ? updatedCharacter : element,
                 ),
                 files: sortFiles([
                   uploadedFile,
-                  ...current.files.filter(
+                  ...(current.files ?? []).filter(
                     (existingFile) =>
                       existingFile.id !== uploadedFile.id &&
                       (!removedPreviousFile || existingFile.id !== removedPreviousFile.id),
@@ -654,11 +654,11 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           current
             ? {
                 ...current,
-                worldElements: current.worldElements.map((element) =>
+                worldElements: (current.worldElements ?? []).map((element) =>
                   element.id === updatedCharacter.id ? updatedCharacter : element,
                 ),
                 files: removedFile
-                  ? current.files.filter((file) => file.id !== removedFile.id)
+                  ? (current.files ?? []).filter((file) => file.id !== removedFile.id)
                   : current.files,
                 profile: removedFile
                   ? applyStorageDelta(current.profile, -removedFile.file_size)
@@ -714,7 +714,7 @@ export function DashboardWorkspaceProvider({ children }: { children: ReactNode }
           ? {
               ...current,
               activeProject: updatedProject,
-              projects: current.projects.map((project) =>
+              projects: (current.projects ?? []).map((project) =>
                 project.id === updatedProject.id ? updatedProject : project,
               ),
             }

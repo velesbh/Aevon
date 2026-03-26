@@ -40,7 +40,7 @@ export function QuickIdeaFab({ isMobile = false }: { isMobile?: boolean }) {
         
         recognitionRef.current.onresult = (event: any) => {
           let currentTranscript = '';
-          for (let i = event.resultIndex; i < event.results.length; i++) {
+          for (let i = event.resultIndex; i < (event.results?.length ?? 0); i++) {
             const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
               setIdeaText((prev) => prev + transcript + " ");
@@ -138,7 +138,7 @@ export function QuickIdeaFab({ isMobile = false }: { isMobile?: boolean }) {
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Lightbulb className="text-emerald-500" size={20} />
+            <Lightbulb className="text-[var(--primary)]" size={20} />
             <Typography variant="h6" fontWeight="bold">Quick Idea</Typography>
           </Box>
           <IconButton onClick={() => setOpen(false)} size="small" disabled={isSaving}>
@@ -185,8 +185,8 @@ export function QuickIdeaFab({ isMobile = false }: { isMobile?: boolean }) {
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
-              bgcolor: 'emerald.500',
-              '&:hover': { bgcolor: 'emerald.600' }
+              bgcolor: 'var(--primary)',
+              '&:hover': { opacity: 0.9 }
             }}
           >
             Save Idea

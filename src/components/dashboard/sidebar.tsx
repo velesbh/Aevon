@@ -61,9 +61,9 @@ type SidebarModule = ModuleDefinition & {
   count?: number;
 };
 
-const BRAND_COLOR = "var(--primary, #188038)";
-const BRAND_SURFACE = "rgba(24, 128, 56, 0.14)";
-const BRAND_BORDER = "rgba(24, 128, 56, 0.25)";
+const ACCENT = "var(--primary, #34a853)";
+const ACCENT_SURFACE = "var(--state-layer-primary, rgba(52, 168, 83, 0.16))";
+const ACCENT_BORDER = "var(--state-layer-primary-strong, rgba(52, 168, 83, 0.24))";
 
 export function DashboardSidebar({
   mobileMenuOpen,
@@ -120,7 +120,7 @@ export function DashboardSidebar({
   const counts = useModuleCounts({ chapters, worldElements, files, projects });
 
   const sidebarModules = useMemo<SidebarModule[]>(() => {
-    return moduleDefinitions.map((definition) => ({
+    return (moduleDefinitions ?? []).map((definition) => ({
       ...definition,
       label: t(definition.labelKey),
       description: definition.descriptionKey ? t(definition.descriptionKey) : undefined,
@@ -144,10 +144,10 @@ export function DashboardSidebar({
 
   const filteredProjects = useMemo(() => {
     if (!projectFilter.trim()) {
-      return projects;
+      return projects ?? [];
     }
     const query = projectFilter.toLowerCase();
-    return projects.filter((project) => project.title.toLowerCase().includes(query));
+    return (projects ?? []).filter((project) => project.title.toLowerCase().includes(query));
   }, [projectFilter, projects]);
 
   const closeMobileNav = useCallback(() => {
@@ -223,7 +223,7 @@ export function DashboardSidebar({
       map: [],
       lore: [],
     };
-    for (const el of worldElements) {
+    for (const el of worldElements ?? []) {
       if (!map[el.type]) map[el.type] = [];
       map[el.type].push({ id: el.id, title: el.name || "Untitled" });
     }
@@ -231,7 +231,7 @@ export function DashboardSidebar({
   }, [worldElements]);
 
   const chapterItems = useMemo(() => {
-    return chapters.map((c) => ({ id: c.id, title: c.title || "Untitled Chapter" }));
+    return (chapters ?? []).map((c) => ({ id: c.id, title: c.title || "Untitled Chapter" }));
   }, [chapters]);
 
   const getNestedItems = useCallback((moduleId: string) => {
@@ -291,6 +291,7 @@ export function DashboardSidebar({
         bgcolor: "background.paper",
         borderRight: isMui ? undefined : "1px solid",
         borderColor: "divider",
+        overflow: "hidden",
       }}
     >
       <MuiBox sx={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -302,31 +303,33 @@ export function DashboardSidebar({
             borderColor: "divider",
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 0.75,
           }}
         >
           <ButtonBase
             onClick={(event) => setProjectAnchorEl(event.currentTarget)}
             sx={{
-              px: 1,
+              px: 1.25,
               py: 0.75,
-              borderRadius: 2,
+              borderRadius: 2.5,
               flex: 1,
               display: "flex",
               alignItems: "center",
               gap: 1.25,
+              transition: "all 0.15s ease",
               "&:hover": { bgcolor: "action.hover" },
+              "&:active": { transform: "scale(0.98)" },
             }}
           >
             <MuiBox
               sx={{
-                height: 28,
-                width: 28,
-                borderRadius: 1.25,
-                background: "linear-gradient(135deg, var(--color-primary, #10b981), #059669)",
+                height: 30,
+                width: 30,
+                borderRadius: 2,
+                bgcolor: ACCENT,
                 color: "white",
                 fontWeight: 700,
-                fontSize: "0.875rem",
+                fontSize: "0.8rem",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -336,14 +339,14 @@ export function DashboardSidebar({
               {(activeProjectTitle ?? t("sidebar.project.fallback_title")).charAt(0).toUpperCase()}
             </MuiBox>
             <Stack spacing={0} sx={{ flex: 1, minWidth: 0, alignItems: "flex-start" }}>
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ textTransform: "uppercase", fontSize: "0.6rem", letterSpacing: "0.05em", fontWeight: 600, lineHeight: 1 }}>
-                {t("sidebar.projects.count").replace("{count}", projects.length.toString())}
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ textTransform: "uppercase", fontSize: "0.575rem", letterSpacing: "0.06em", fontWeight: 600, lineHeight: 1 }}>
+                {t("sidebar.projects.count").replace("{count}", (projects?.length ?? 0).toString())}
               </Typography>
-              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600, fontSize: "0.85rem", lineHeight: 1.2, mt: 0.25 }}>
+              <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600, fontSize: "0.8rem", lineHeight: 1.2, mt: 0.25, color: "text.primary" }}>
                 {activeProjectTitle ?? t("sidebar.project.fallback_title")}
               </Typography>
             </Stack>
-            <ChevronDown size={14} />
+            <ChevronDown size={13} style={{ opacity: 0.5 }} />
           </ButtonBase>
 
           {/* Hide Sidebar Button */}
@@ -354,11 +357,12 @@ export function DashboardSidebar({
               sx={{
                 display: { xs: 'none', md: 'flex' },
                 color: 'text.secondary',
-                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' }
+                '&:hover': { color: 'text.primary', bgcolor: 'action.hover' },
+                '&:active': { transform: 'scale(0.9)' },
               }}
               title="Hide Sidebar"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </IconButton>
           )}
         </MuiBox>
@@ -378,19 +382,19 @@ export function DashboardSidebar({
             </MuiBox>
           )}
 
-          {moduleSections.map((section, idx) => {
+          {moduleSections?.map((section, idx) => {
             const sectionModules = section.ids
-              .map((id) => modulesById[id])
+              .map((id) => modulesById?.[id])
               .filter((m): m is SidebarModule => Boolean(m));
 
             if (sectionModules.length === 0) return null;
 
             return (
-              <MuiBox key={section.labelKey} sx={{ mb: idx < moduleSections.length - 1 ? 2 : 0 }}>
+              <MuiBox key={section.labelKey} sx={{ mb: idx < (moduleSections?.length ?? 0) - 1 ? 2 : 0 }}>
                 <Typography
                   variant="caption"
                   color="text.secondary"
-                  sx={{ px: 1, mb: 0.5, display: "block", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase", fontSize: "0.65rem" }}
+                  sx={{ px: 1, mb: 0.75, display: "block", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", fontSize: "0.6rem", opacity: 0.7 }}
                 >
                   {t(section.labelKey)}
                 </Typography>
@@ -512,7 +516,7 @@ function ProjectPopover({
               {project.id === activeProjectId && <Check size={16} />}
             </ListItemButton>
           ))}
-          {projects.length === 0 && (
+          {(projects?.length ?? 0) === 0 && (
             <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
               No projects found.
             </Typography>
@@ -584,28 +588,28 @@ function SidebarFooter({
 
   return (
     <MuiBox sx={{ borderTop: "1px solid", borderColor: "divider", p: 1.5 }}>
-      <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
+      <Stack direction="row" spacing={0.5} justifyContent="center" alignItems="center">
         <IconButton
           size="small"
           onClick={() => setIdeaOpen(true)}
           title="Quick Idea"
-          sx={{ color: "text.secondary", "&:hover": { color: "var(--color-primary, #10b981)" } }}
+          sx={{ color: "text.secondary", "&:hover": { color: ACCENT, bgcolor: ACCENT_SURFACE }, "&:active": { transform: "scale(0.9)" } }}
         >
-          <Lightbulb size={20} />
+          <Lightbulb size={18} />
         </IconButton>
         <IconButton
           size="small"
           onClick={toggleTheme}
           title="Toggle Theme"
-          sx={{ color: "text.secondary", "&:hover": { color: "var(--color-primary, #10b981)" } }}
+          sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "action.hover" }, "&:active": { transform: "scale(0.9)" } }}
         >
-          {(resolvedTheme ?? theme) === "dark" ? <Sun size={20} /> : <Moon size={20} />}
+          {(resolvedTheme ?? theme) === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </IconButton>
         <IconButton
           size="small"
           onClick={toggleLanguage}
           title="Toggle Language"
-          sx={{ color: "text.secondary", fontSize: "0.875rem", fontWeight: 700 }}
+          sx={{ color: "text.secondary", fontSize: "0.75rem", fontWeight: 700, "&:hover": { bgcolor: "action.hover" }, "&:active": { transform: "scale(0.9)" } }}
         >
           {language.toUpperCase()}
         </IconButton>
@@ -613,18 +617,18 @@ function SidebarFooter({
           size="small"
           onClick={onOpenSettings}
           title="Settings"
-          sx={{ color: "text.secondary" }}
+          sx={{ color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "action.hover" }, "&:active": { transform: "scale(0.9)" } }}
         >
-          <Settings size={20} />
+          <Settings size={18} />
         </IconButton>
         <IconButton
           size="small"
-          color="error"
           onClick={onSignOut}
           disabled={signingOut}
           title="Sign out"
+          sx={{ color: "text.secondary", "&:hover": { color: "error.main", bgcolor: "rgba(239,68,68,0.08)" }, "&:active": { transform: "scale(0.9)" } }}
         >
-          {signingOut ? <Loader2 className="animate-spin" size={20} /> : <LogOut size={20} />}
+          {signingOut ? <Loader2 className="animate-spin" size={18} /> : <LogOut size={18} />}
         </IconButton>
       </Stack>
       {authError && (
@@ -649,7 +653,7 @@ function SidebarFooter({
       >
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pb: 1 }}>
           <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Lightbulb className="text-emerald-500" size={20} />
+            <Lightbulb className="text-[var(--primary)]" size={20} />
             <Typography variant="h6" fontWeight="bold">Quick Idea</Typography>
           </MuiBox>
           <IconButton onClick={() => setIdeaOpen(false)} size="small" disabled={isSavingIdea}>
@@ -684,8 +688,8 @@ function SidebarFooter({
               borderRadius: 2,
               textTransform: 'none',
               fontWeight: 600,
-              bgcolor: 'emerald.500',
-              '&:hover': { bgcolor: 'emerald.600' }
+              bgcolor: 'var(--primary)',
+              '&:hover': { opacity: 0.9 }
             }}
           >
             Save Idea
@@ -708,7 +712,7 @@ function useModuleCounts({
   projects: { id: string }[];
 }) {
   return useMemo(() => {
-    const byType = worldElements.reduce<Record<string, number>>((acc, element) => {
+    const byType = (worldElements ?? []).reduce<Record<string, number>>((acc, element) => {
       acc[element.type] = (acc[element.type] ?? 0) + 1;
       return acc;
     }, {});
@@ -808,13 +812,14 @@ const SidebarModuleItem = memo(function SidebarModuleItem({
         }}
         className="group relative"
         sx={{
-          borderRadius: 1,
-          py: 0.5,
-          px: 1,
-          minHeight: 32,
+          borderRadius: 2,
+          py: 0.6,
+          px: 1.25,
+          minHeight: 34,
+          transition: "all 0.15s ease",
           "&.Mui-selected": {
-            bgcolor: "var(--color-primary-light, rgba(16, 185, 129, 0.1))",
-            "&:hover": { bgcolor: "var(--color-primary-light, rgba(16, 185, 129, 0.15))" },
+            bgcolor: ACCENT_SURFACE,
+            "&:hover": { bgcolor: ACCENT_BORDER },
           },
           "&:hover": {
             bgcolor: "action.hover",
@@ -827,27 +832,31 @@ const SidebarModuleItem = memo(function SidebarModuleItem({
             onClick={(e) => onToggleExpanded(e, module.id)}
             sx={{
               p: 0.25,
-              mr: 0.75,
-              ml: -0.5,
-              color: isActive ? "var(--color-primary, #10b981)" : "text.secondary",
+              mr: 0.5,
+              ml: -0.25,
+              color: isActive ? ACCENT : "text.tertiary",
+              transition: "transform 0.15s ease",
+              transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
             }}
           >
-            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <ChevronDown size={13} />
           </IconButton>
         )}
-        <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1, ml: module.nested ? 0 : 0.5 }}>
+        <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flex: 1, ml: module.nested ? 0 : 0.25 }}>
           <module.icon
-            size={16}
+            size={15}
             style={{
-              color: isActive ? "var(--color-primary, #10b981)" : "inherit",
+              color: isActive ? "var(--primary, #34a853)" : "var(--text-tertiary)",
+              transition: "color 0.15s ease",
             }}
           />
           <Typography
             variant="body2"
             sx={{
-              fontSize: "0.8125rem",
+              fontSize: "0.8rem",
               fontWeight: isActive ? 600 : 500,
-              color: isActive ? "var(--color-primary, #10b981)" : "text.primary",
+              color: isActive ? "text.primary" : "text.secondary",
+              transition: "color 0.15s ease",
             }}
           >
             {module.label}
@@ -858,7 +867,7 @@ const SidebarModuleItem = memo(function SidebarModuleItem({
           direction="row"
           spacing={0.25}
           alignItems="center"
-          className="opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+          className="opacity-0 group-hover:opacity-100 transition-opacity duration-150"
           sx={isActive ? { opacity: 1 } : {}}
         >
           {module.createType && (
@@ -867,20 +876,22 @@ const SidebarModuleItem = memo(function SidebarModuleItem({
               onClick={(e) => onCreateEntry(e, module.createType!, module.href)}
               sx={{
                 p: 0.25,
-                color: "text.secondary",
-                "&:hover": { color: "var(--color-primary, #10b981)", bgcolor: "var(--color-primary-light, rgba(16, 185, 129, 0.1))" },
+                color: "text.tertiary",
+                "&:hover": { color: ACCENT, bgcolor: ACCENT_SURFACE },
+                "&:active": { transform: "scale(0.85)" },
+                transition: "all 0.15s ease",
               }}
             >
-              <Plus size={14} />
+              <Plus size={13} />
             </IconButton>
           )}
         </Stack>
       </ListItemButton>
 
       {/* Nested Items */}
-      {module.nested && nestedItems.length > 0 && (
+      {module.nested && (nestedItems?.length ?? 0) > 0 && (
         <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-          <List dense disablePadding className="mt-1">
+          <List dense disablePadding sx={{ mt: 0.25 }}>
             {nestedItems.map((nested) => {
               const isNestedActive = isActive && activeId === nested.id;
               return (
@@ -889,22 +900,39 @@ const SidebarModuleItem = memo(function SidebarModuleItem({
                   selected={isNestedActive}
                   onClick={() => onNestedSelect(module.href, nested.id)}
                   onContextMenu={(e) => handleContextMenu(e, nested.id, nested.title)}
-                  className="pl-8 pr-2 py-1 rounded min-h-[24px]"
                   sx={{
+                    pl: 4.5,
+                    pr: 1,
+                    py: 0.35,
+                    minHeight: 26,
+                    borderRadius: 1.5,
+                    transition: "all 0.15s ease",
                     "&.Mui-selected": {
-                      bgcolor: "var(--color-primary-light, rgba(16, 185, 129, 0.1))",
-                      "&:hover": { bgcolor: "var(--color-primary-light, rgba(16, 185, 129, 0.15))" },
+                      bgcolor: ACCENT_SURFACE,
+                      "&:hover": { bgcolor: ACCENT_BORDER },
                     },
                   }}
                 >
-                  <Stack direction="row" spacing={1} alignItems="center" className="flex-1">
-                    <span className={`text-[0.4rem] flex items-center ${isNestedActive ? 'text-[var(--color-primary)]' : 'text-gray-400'}`}>
-                      ■
-                    </span>
+                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
+                    <MuiBox
+                      sx={{
+                        width: 4,
+                        height: 4,
+                        borderRadius: "50%",
+                        bgcolor: isNestedActive ? ACCENT : "text.disabled",
+                        flexShrink: 0,
+                        transition: "background-color 0.15s ease",
+                      }}
+                    />
                     <Typography
                       variant="body2"
                       noWrap
-                      className={`text-xs ${isNestedActive ? 'font-medium text-[var(--color-primary)]' : 'font-normal text-gray-500 dark:text-gray-400'}`}
+                      sx={{
+                        fontSize: "0.75rem",
+                        fontWeight: isNestedActive ? 600 : 400,
+                        color: isNestedActive ? "text.primary" : "text.secondary",
+                        transition: "color 0.15s ease",
+                      }}
                     >
                       {nested.title}
                     </Typography>

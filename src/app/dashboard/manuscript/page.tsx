@@ -470,8 +470,8 @@ export default function ManuscriptPage() {
                       className={cn(
                         "rounded-full px-4 font-semibold transition-all",
                         isEditing 
-                          ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-200" 
-                          : "border-emerald-200 text-emerald-600 hover:bg-emerald-50"
+                          ? "bg-[var(--primary)] hover:opacity-90 text-white shadow-md active:scale-95" 
+                          : "border-[var(--border-ui)] text-[var(--primary)] hover:bg-[var(--background-app)]"
                       )}
                     >
                       {isEditing ? t("ms.done") : t("ms.edit")}
@@ -681,12 +681,12 @@ export default function ManuscriptPage() {
             
             <div className="flex items-center gap-4">
                {status && !saving && (
-                <span className="text-emerald-500 font-medium animate-pulse flex items-center gap-1.5">
+                <span className="text-[var(--primary)] font-medium animate-pulse flex items-center gap-1.5">
                   {status}
                 </span>
               )}
               {saving && (
-                <span className="text-emerald-500 font-medium flex items-center gap-1.5">
+                <span className="text-[var(--primary)] font-medium flex items-center gap-1.5">
                   <RefreshCw size={14} className="animate-spin" />
                   Saving...
                 </span>

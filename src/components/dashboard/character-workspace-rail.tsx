@@ -191,7 +191,7 @@ export function CharacterWorkspacePanel({ className }: { className?: string }) {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--background-surface)]">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -296,7 +296,7 @@ function CharacterCard({ character, onClick }: { character: WorldElementRecord; 
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer flex flex-col rounded-[24px] border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:border-emerald-500/50 transition-all duration-300 relative aspect-[4/5]"
+      className="group cursor-pointer flex flex-col rounded-[24px] border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:border-[var(--border-ui-hover)] transition-all duration-300 relative aspect-[4/5]"
     >
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent z-10" />
       
@@ -315,7 +315,7 @@ function CharacterCard({ character, onClick }: { character: WorldElementRecord; 
       <div className="mt-auto p-6 relative z-20">
         <div className="flex items-center gap-2 mb-2">
           {attributes.role && (
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20 backdrop-blur-md">
+            <span className="text-[10px] font-black uppercase tracking-widest text-white/90 bg-white/15 px-2.5 py-1 rounded-full border border-white/20 backdrop-blur-md">
               {attributes.role}
             </span>
           )}
@@ -325,7 +325,7 @@ function CharacterCard({ character, onClick }: { character: WorldElementRecord; 
             </span>
           )}
         </div>
-        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-emerald-400 transition-colors">
+        <h3 className="text-xl font-bold text-white mb-1 transition-colors">
           {character.name || "Untitled"}
         </h3>
         {attributes.summary && (

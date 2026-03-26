@@ -30,7 +30,7 @@ export function DashboardThemeToggle() {
   return (
     <div className="rounded-[16px] border border-[var(--border-ui)] bg-[var(--background-app)] p-1">
       <div className="relative grid grid-cols-2 gap-1">
-        {themes.map((option) => {
+        {(themes ?? []).map((option) => {
           const isActive = activeTheme === option.id;
           return (
             <button

@@ -48,14 +48,14 @@ import { cn } from "@/lib/utils";
 // --- CUSTOM NODE COMPONENT ---
 const CharacterNode = ({ data }: { data: any }) => {
   return (
-    <div className="relative px-4 py-2 shadow-xl rounded-xl bg-[var(--background-surface)] border-2 border-[var(--border-ui)] min-w-[200px] flex items-center gap-3 transition-transform hover:scale-105 hover:border-emerald-500/50">
-      <Handle type="target" position={Position.Top} className="w-3 h-3 bg-emerald-500" />
-      <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center shrink-0 overflow-hidden border border-emerald-500/30">
+    <div className="relative px-4 py-2 shadow-lg rounded-xl bg-[var(--background-surface)] border border-[var(--border-ui)] min-w-[200px] flex items-center gap-3 transition-all hover:scale-[1.03] hover:border-[var(--border-ui-hover)] hover:shadow-xl">
+      <Handle type="target" position={Position.Top} className="w-3 h-3" style={{ background: 'var(--primary, #34a853)' }} />
+      <div className="w-12 h-12 rounded-full bg-[var(--background-app)] flex items-center justify-center shrink-0 overflow-hidden border border-[var(--border-ui)]">
         {data.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={data.imageUrl} alt={data.name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-emerald-700 dark:text-emerald-300 font-bold text-lg">
+          <span className="text-[var(--text-secondary)] font-bold text-lg">
             {data.name?.charAt(0) || "?"}
           </span>
         )}
@@ -68,12 +68,12 @@ const CharacterNode = ({ data }: { data: any }) => {
           {data.role || "Character"}
         </span>
         {data.status && (
-          <span className="text-[10px] mt-1 uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-semibold">
+          <span className="text-[10px] mt-1 uppercase tracking-wider text-[var(--primary)] font-semibold">
             {data.status}
           </span>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} className="w-3 h-3 bg-emerald-500" />
+      <Handle type="source" position={Position.Bottom} className="w-3 h-3" style={{ background: 'var(--primary, #34a853)' }} />
     </div>
   );
 };
@@ -419,13 +419,13 @@ export default function RelationshipsPage() {
       >
         <div className="flex items-center justify-between border-b border-[var(--border-ui)]/50 px-4 py-3">
           <div className="flex items-center gap-2">
-            <Network className="h-5 w-5 text-emerald-500" />
+            <Network className="h-5 w-5 text-[var(--text-secondary)]" />
             <h2 className="text-sm font-bold text-[var(--text-primary)]">Relationship Trees</h2>
           </div>
           <button
             onClick={handleCreateTree}
             disabled={isCreating}
-            className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--background-app)] hover:text-emerald-500"
+            className="rounded-lg p-1.5 text-[var(--text-secondary)] hover:bg-[var(--background-app)] hover:text-[var(--primary)] transition-colors"
             title="New Tree"
           >
             {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -440,7 +440,7 @@ export default function RelationshipsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search trees..."
-              className="w-full rounded-lg bg-[var(--background-app)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:ring-1 focus:ring-emerald-500/50"
+              className="w-full rounded-lg bg-[var(--background-app)] py-2 pl-9 pr-8 text-sm text-[var(--text-primary)] outline-none placeholder:text-[var(--text-tertiary)] focus:ring-1 focus:ring-[var(--primary)]/50"
             />
             {searchQuery && (
               <button
@@ -462,7 +462,7 @@ export default function RelationshipsPage() {
                 <button
                   onClick={handleCreateTree}
                   disabled={isCreating}
-                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                 >
                   {isCreating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
                   Create Tree
@@ -480,14 +480,14 @@ export default function RelationshipsPage() {
                     className={cn(
                       "flex w-full items-start gap-3 rounded-lg px-3 py-3 text-left transition-all",
                       isActive
-                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        ? "bg-[var(--state-layer-primary)] text-[var(--primary)]"
                         : "text-[var(--text-secondary)] hover:bg-[var(--background-app)]"
                     )}
                   >
                     <Network
                       className={cn(
                         "mt-0.5 h-4 w-4 shrink-0",
-                        isActive ? "text-emerald-600 dark:text-emerald-400" : "text-[var(--text-tertiary)]"
+                        isActive ? "text-[var(--primary)]" : "text-[var(--text-tertiary)]"
                       )}
                     />
                     <div className="min-w-0 flex-1">
@@ -550,7 +550,7 @@ export default function RelationshipsPage() {
                 <button
                   onClick={handleSaveTree}
                   disabled={isSaving}
-                  className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg transition-all hover:bg-emerald-500 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white shadow-md transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
                 >
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                   Save Layout
@@ -572,7 +572,7 @@ export default function RelationshipsPage() {
               <button
                 onClick={handleCreateTree}
                 disabled={isCreating}
-                className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-500 hover:shadow-emerald-500/25 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-[var(--primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 active:scale-95 disabled:opacity-50"
               >
                 {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 Create New Tree
@@ -596,14 +596,14 @@ export default function RelationshipsPage() {
               <MiniMap 
                 className="bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-xl overflow-hidden shadow-xl"
                 maskColor="var(--background-app)"
-                nodeColor="var(--emerald-500)"
+                nodeColor="var(--primary, #34a853)"
               />
               
               <Panel position="top-left" className="mt-16 ml-2">
                 <div className="relative flex flex-col gap-2">
                   <button
                     onClick={() => setShowAddMenu(!showAddMenu)}
-                    className="flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-all hover:bg-emerald-500 hover:shadow-emerald-500/25"
+                    className="flex items-center gap-2 rounded-full bg-[var(--primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-all hover:opacity-90 active:scale-95"
                   >
                     <Users className="h-4 w-4" />
                     Add Character
@@ -629,7 +629,7 @@ export default function RelationshipsPage() {
                           value={addSearchQuery}
                           onChange={(e) => setAddSearchQuery(e.target.value)}
                           placeholder="Search characters..."
-                          className="w-full rounded-lg bg-[var(--background-app)] py-1.5 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-emerald-500/50"
+                          className="w-full rounded-lg bg-[var(--background-app)] py-1.5 pl-8 pr-3 text-xs text-[var(--text-primary)] outline-none focus:ring-1 focus:ring-[var(--primary)]/50"
                         />
                       </div>
                       <div className="max-h-60 overflow-y-auto space-y-1 pr-1">
@@ -642,12 +642,12 @@ export default function RelationshipsPage() {
                             <button
                               key={char.id}
                               onClick={() => addCharacterNode(char.id)}
-                              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm hover:bg-emerald-50 dark:hover:bg-emerald-500/10"
+                              className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-sm hover:bg-[var(--background-app)] transition-colors"
                             >
                               <span className="truncate font-medium text-[var(--text-secondary)]">
                                 {char.name}
                               </span>
-                              <Plus className="h-3.5 w-3.5 text-emerald-500 shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                              <Plus className="h-3.5 w-3.5 text-[var(--primary)] shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                             </button>
                           ))
                         )}
@@ -663,7 +663,7 @@ export default function RelationshipsPage() {
 
       {/* Notification Toast */}
       {status && (
-        <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
+        <div className="absolute bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-[var(--primary)] px-4 py-2 text-sm font-medium text-white shadow-lg animate-in fade-in slide-in-from-bottom-4">
           {status}
         </div>
       )}

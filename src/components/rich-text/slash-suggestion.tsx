@@ -77,7 +77,7 @@ function buildDropdown({
   const container = document.createElement("div");
   container.className = "slash-dropdown p-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl max-h-[350px] overflow-y-auto flex flex-col min-w-[280px] outline-none";
   
-  if (!items.length) {
+  if (!(items?.length ?? 0)) {
     return { container, buttons: [] };
   }
 
@@ -192,7 +192,7 @@ export function createSlashSuggestion(): Omit<SuggestionOptions, "editor"> {
             return true;
           }
           if (props.event.key === "ArrowDown") {
-            activeIndex = (activeIndex + 1) % buttons.length;
+            activeIndex = (activeIndex + 1) % (buttons?.length ?? 1);
             buttons.forEach((b, i) => {
               if (i === activeIndex) {
                 b.classList.add("bg-slate-100", "dark:bg-slate-800", "ring-1", "ring-slate-200", "dark:ring-slate-700");
@@ -204,7 +204,7 @@ export function createSlashSuggestion(): Omit<SuggestionOptions, "editor"> {
             return true;
           }
           if (props.event.key === "ArrowUp") {
-            activeIndex = (activeIndex - 1 + buttons.length) % buttons.length;
+            activeIndex = (activeIndex - 1 + (buttons?.length ?? 1)) % (buttons?.length ?? 1);
             buttons.forEach((b, i) => {
               if (i === activeIndex) {
                 b.classList.add("bg-slate-100", "dark:bg-slate-800", "ring-1", "ring-slate-200", "dark:ring-slate-700");

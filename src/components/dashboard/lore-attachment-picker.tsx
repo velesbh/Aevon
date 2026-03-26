@@ -39,16 +39,16 @@ export function LoreAttachmentPicker({ attachedLoreIds, onChange }: LoreAttachme
     onChange(attachedLoreIds.filter(i => i !== id));
   };
 
-  const attachedLore = loreElements.filter(l => attachedLoreIds.includes(l.id));
+  const attachedLore = (loreElements ?? []).filter(l => attachedLoreIds.includes(l.id));
 
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2 mb-1">
-        {attachedLore.map(lore => (
-          <div key={lore.id} className="flex items-center gap-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 px-2 py-1 rounded-md text-xs font-medium border border-emerald-500/20">
+        {(filteredLore ?? []).map((lore) => (
+          <div key={lore.id} className="flex items-center gap-1 bg-[var(--state-layer-primary)] text-[var(--primary)] px-2 py-1 rounded-md text-xs font-medium border border-[var(--primary)]/20">
             <BookOpen className="w-3 h-3" />
             <span>{lore.name || t("common.untitled")}</span>
-            <button onClick={(e) => removeLore(lore.id, e)} className="hover:text-emerald-900 dark:hover:text-emerald-200 ml-1">
+            <button onClick={(e) => removeLore(lore.id, e)} className="hover:opacity-70 ml-1">
               <X className="w-3 h-3" />
             </button>
           </div>
@@ -59,7 +59,7 @@ export function LoreAttachmentPicker({ attachedLoreIds, onChange }: LoreAttachme
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm hover:border-emerald-500/50 transition-colors"
+          className="w-full flex items-center justify-between rounded-xl border border-[var(--border-ui)] bg-[var(--background-app)] px-3 py-2 text-sm text-[var(--text-primary)] shadow-sm hover:border-[var(--border-ui-hover)] transition-colors"
         >
           <span className="text-[var(--text-tertiary)]">Attach Lore...</span>
           <ChevronsUpDown className="w-4 h-4 text-[var(--text-tertiary)]" />
@@ -86,7 +86,7 @@ export function LoreAttachmentPicker({ attachedLoreIds, onChange }: LoreAttachme
                       onClick={() => toggleLore(lore.id)}
                       className={cn(
                         "w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-[var(--background-surface)] transition-colors text-left",
-                        isSelected && "text-emerald-600 dark:text-emerald-400 font-medium"
+                        isSelected && "text-[var(--primary)] font-medium"
                       )}
                     >
                       <span>{lore.name || t("common.untitled")}</span>

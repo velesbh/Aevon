@@ -50,10 +50,9 @@ function ItemGridCard({
   return (
     <div
       onClick={onClick}
-      className="group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-200 relative h-[280px]"
+      className="group cursor-pointer flex flex-col rounded-2xl border border-[var(--border-ui)] bg-[var(--background-app)] overflow-hidden shadow-sm hover:shadow-md hover:border-[var(--border-ui-hover)] transition-all duration-200 relative h-[280px]"
     >
       <div className="h-32 bg-[var(--background-surface)] border-b border-[var(--border-ui)]/50 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         {signedUrl ? (
           <img
             src={signedUrl}
@@ -67,14 +66,14 @@ function ItemGridCard({
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-2">
-          <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+          <span className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--background-surface)] px-2 py-0.5 rounded-md border border-[var(--border-ui)]">
             {element.type.toUpperCase()}
           </span>
-          <span className="text-xs font-medium text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
+          <span className="text-xs font-medium text-[var(--text-secondary)] bg-[var(--background-surface)] px-2 py-0.5 rounded-md border border-[var(--border-ui)]">
             {getAttributeText(element.attributes, "rarity") || "Common"}
           </span>
         </div>
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2 line-clamp-1 transition-colors">
           {element.name || "Untitled"}
         </h3>
         <p className="text-sm text-[var(--text-secondary)] line-clamp-2 leading-relaxed flex-1">
@@ -319,7 +318,7 @@ export default function ItemsPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-[var(--background-surface)]">
-        <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
       </div>
     );
   }
@@ -361,7 +360,7 @@ export default function ItemsPage() {
           {selectedElement && (
             <>
               {status && (
-                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest animate-pulse px-2 hidden sm:block">
+                <span className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-widest animate-pulse px-2 hidden sm:block">
                   {status}
                 </span>
               )}
@@ -371,7 +370,7 @@ export default function ItemsPage() {
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-sm",
                   isDirty
-                    ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-900/10"
+                    ? "bg-[var(--primary)] hover:opacity-90 text-white active:scale-95"
                     : "bg-[var(--background-app)] text-[var(--text-tertiary)] border border-[var(--border-ui)] opacity-50 cursor-not-allowed"
                 )}
               >
@@ -394,7 +393,7 @@ export default function ItemsPage() {
             <button
               onClick={handleCreate}
               disabled={creating}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-all shadow-sm shadow-emerald-900/10"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] hover:opacity-90 text-white text-sm font-bold transition-all active:scale-95"
             >
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               <span>{t("common.create") || "Create Item"}</span>
@@ -515,7 +514,7 @@ export default function ItemsPage() {
                           <select
                             value={entryDraft?.attributes?.rarity || "Common"}
                             onChange={(e) => handleAttributeChange("rarity", e.target.value)}
-                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer hover:border-emerald-500/30"
+                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary)]/20 transition-all cursor-pointer hover:border-[var(--border-ui-hover)]"
                           >
                             <option value="Common">Common</option>
                             <option value="Uncommon">Uncommon</option>
@@ -535,7 +534,7 @@ export default function ItemsPage() {
                             value={entryDraft?.attributes?.value || ""}
                             onChange={(e) => handleAttributeChange("value", e.target.value)}
                             placeholder="Ex: 500 Gold"
-                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all hover:border-emerald-500/30"
+                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary)]/20 transition-all hover:border-[var(--border-ui-hover)]"
                           />
                         </div>
                       </div>
@@ -548,7 +547,7 @@ export default function ItemsPage() {
                           <select
                             value={entryDraft?.attributes?.owner_id || ""}
                             onChange={(e) => handleAttributeChange("owner_id", e.target.value)}
-                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer hover:border-emerald-500/30"
+                            className="w-full bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-2xl px-4 py-3 text-sm font-bold text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--primary)]/20 transition-all cursor-pointer hover:border-[var(--border-ui-hover)]"
                           >
                             <option value="">Unassigned</option>
                             {worldElements
@@ -565,8 +564,7 @@ export default function ItemsPage() {
 
                     {/* Image Upload Area */}
                     <div className="group relative">
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-[32px] blur opacity-0 group-hover:opacity-100 transition-opacity" />
-                      <div className="relative bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-[30px] overflow-hidden aspect-[21/9] flex items-center justify-center group-hover:border-emerald-500/30 transition-all shadow-sm">
+                      <div className="relative bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-[30px] overflow-hidden aspect-[21/9] flex items-center justify-center group-hover:border-[var(--border-ui-hover)] transition-all shadow-sm">
                         {entryDraft?.attributes?.item_image_url ? (
                           <>
                             {itemImageUrl ? (
@@ -596,7 +594,7 @@ export default function ItemsPage() {
                         ) : (
                           <button
                             onClick={() => setSelectorOpen(true)}
-                            className="flex flex-col items-center gap-4 text-[var(--text-tertiary)] hover:text-emerald-500 transition-colors"
+                            className="flex flex-col items-center gap-4 text-[var(--text-tertiary)] hover:text-[var(--primary)] transition-colors"
                           >
                             <div className="w-16 h-16 rounded-full bg-[var(--background-app)] border border-[var(--border-ui)]/50 flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}>
                               <Upload className="w-6 h-6" />
@@ -624,7 +622,7 @@ export default function ItemsPage() {
                           Item Lore & Description
                         </label>
                       </div>
-                      <div className="min-h-[400px] bg-[var(--background-surface)] border border-[var(--border-ui)]/50 rounded-[32px] p-6 focus-within:border-emerald-500/30 transition-all">
+                      <div className="min-h-[400px] bg-[var(--background-surface)] border border-[var(--border-ui)] rounded-[32px] p-6 focus-within:border-[var(--primary)]/30 transition-all">
                         <RichTextEditor
                           value={entryDraft?.description ?? ""}
                           onChange={(content) => handleFieldChange("description", content)}
