@@ -44,7 +44,7 @@ export async function generateMetadata(): Promise<Metadata> {
       site: "@AevonApp",
       creator: "@AevonApp",
       title: "Aevon Blog - Writing Guides & Worldbuilding Tutorials",
-      description: `Discover comprehensive writing guides, worldbuilding tutorials, and author tips. ${posts.length} articles covering character development, plot structure, dialogue writing, and more.`,
+      description: `Discover comprehensive writing guides, worldbuilding tutorials, and author tips. ${blogPosts.length} articles covering character development, plot structure, dialogue writing, and more.`,
       images: ["/aevon.png"],
     },
     robots: {
