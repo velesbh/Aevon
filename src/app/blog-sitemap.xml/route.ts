@@ -14,7 +14,7 @@ export async function GET() {
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-  ${posts.map(post => `
+  ${blogPosts.map(post => `
   <url>
     <loc>${baseUrl}/blog/${post.slug}</loc>
     <lastmod>${post.publishDate}</lastmod>
