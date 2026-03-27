@@ -227,6 +227,43 @@
     color: var(--text-tertiary);
   }
 
+  /* Additional form field fixes for light mode */
+  .bg-background input,
+  .bg-background textarea,
+  .bg-background select,
+  input.bg-background,
+  textarea.bg-background,
+  select.bg-background {
+    color: var(--text-primary) !important;
+    background-color: var(--background-surface) !important;
+  }
+
+  /* Fix for blog search and filter fields */
+  .bg-card input,
+  .bg-card textarea,
+  .bg-card select {
+    color: var(--text-primary) !important;
+    background-color: var(--background) !important;
+    border-color: var(--border) !important;
+  }
+
+  .bg-card input::placeholder,
+  .bg-card textarea::placeholder,
+  .bg-card select::placeholder {
+    color: var(--text-tertiary) !important;
+  }
+
+  /* Ensure all text inputs inherit proper colors */
+  [type="text"],
+  [type="email"],
+  [type="password"],
+  [type="search"],
+  [type="url"],
+  [type="tel"],
+  textarea {
+    color: var(--text-primary) !important;
+  }
+
   /* Ensure MUI fields inherit proper colors */
   .MuiInputBase-input,
   .MuiOutlinedInput-input,
