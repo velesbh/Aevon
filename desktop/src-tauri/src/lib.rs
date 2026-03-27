@@ -14,6 +14,32 @@ pub fn run() {
       }
       Ok(())
     })
+    .invoke_handler(tauri::generate_handler![
+      get_app_info,
+      check_for_updates
+    ])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
+}
+
+#[tauri::command]
+async fn get_app_info() -> Result<serde_json::Value, String> {
+    Ok(serde_json::json!({
+        "name": "Aevon",
+        "version": env!("CARGO_PKG_VERSION"),
+        "description": "Professional novel planning and writing platform",
+        "author": "Enzonic LLC",
+        "website": "https://aevon.ink"
+    }))
+}
+
+#[tauri::command]
+async fn check_for_updates() -> Result<serde_json::Value, String> {
+    // Simulate update check
+    Ok(serde_json::json!({
+        "has_updates": false,
+        "current_version": env!("CARGO_PKG_VERSION"),
+        "latest_version": env!("CARGO_PKG_VERSION"),
+        "update_url": "https://aevon.ink"
+    }))
 }

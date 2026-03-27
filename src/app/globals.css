@@ -264,53 +264,24 @@
     color: var(--text-primary) !important;
   }
 
-  /* Ultra-specific blog form field fixes */
+  /* Theme-aware blog form field fixes */
   .bg-card input[type="text"],
   .bg-card input[type="search"],
   .bg-card input[type="email"],
   .bg-card textarea,
   .bg-card select {
-    color: #111214 !important; /* Force light mode text color */
-    background-color: #ffffff !important; /* Force light mode background */
+    color: var(--text-primary) !important;
+    background-color: var(--background-surface) !important;
   }
 
-  .dark .bg-card input[type="text"],
-  .dark .bg-card input[type="search"],
-  .dark .bg-card input[type="email"],
-  .dark .bg-card textarea,
-  .dark .bg-card select {
-    color: #e8e9eb !important; /* Force dark mode text color */
-    background-color: #1a1c20 !important; /* Force dark mode background */
-  }
-
-  /* Force blog search field specifically */
+  /* Force blog search field specifically - theme aware */
   input[placeholder*="Search"],
   input[placeholder*="Buscar"] {
-    color: #111214 !important;
-    -webkit-text-fill-color: #111214 !important;
+    color: var(--text-primary) !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
   }
 
-  .dark input[placeholder*="Search"],
-  .dark input[placeholder*="Buscar"] {
-    color: #e8e9eb !important;
-    -webkit-text-fill-color: #e8e9eb !important;
-  }
-
-  /* Force all inputs in light mode */
-  :root input,
-  :root textarea,
-  :root select {
-    color: #111214 !important;
-  }
-
-  /* Force all inputs in dark mode */
-  .dark input,
-  .dark textarea,
-  .dark select {
-    color: #e8e9eb !important;
-  }
-
-  /* Fix prose content in light mode */
+  /* Fix prose content - theme aware */
   .prose,
   .prose *,
   .prose p,
@@ -324,57 +295,40 @@
   .prose span,
   .prose strong,
   .prose em {
-    color: #111214 !important;
+    color: var(--text-primary) !important;
   }
 
-  .dark .prose,
-  .dark .prose *,
-  .dark .prose p,
-  .dark .prose h1,
-  .dark .prose h2,
-  .dark .prose h3,
-  .dark .prose h4,
-  .dark .prose h5,
-  .dark .prose h6,
-  .dark .prose li,
-  .dark .prose span,
-  .dark .prose strong,
-  .dark .prose em {
-    color: #e8e9eb !important;
-  }
-
-  /* Fix any remaining white text issues */
-  :root *,
-  :root p,
-  :root span,
-  :root div,
-  :root h1,
-  :root h2,
-  :root h3,
-  :root h4,
-  :root h5,
-  :root h6 {
-    color: #111214 !important;
-  }
-
-  /* But allow specific background colors to remain */
-  :root .bg-background,
-  :root .bg-surface,
-  :root .bg-card {
-    background-color: inherit !important;
-  }
-
-  /* Fix text colors specifically */
+  /* Fix text colors properly - theme aware */
   :root .text-foreground,
-  :root .text-primary,
-  :root [class*="text-"] {
-    color: #111214 !important;
+  :root .text-primary {
+    color: var(--text-primary) !important;
   }
 
   .dark .text-foreground,
-  .dark .text-primary,
-  .dark [class*="text-"] {
-    color: #e8e9eb !important;
+  .dark .text-primary {
+    color: var(--text-primary) !important;
+  }
+
+  /* Fix prose content properly */
+  .prose {
+    color: var(--text-primary) !important;
+  }
+
+  .dark .prose {
+    color: var(--text-primary) !important;
+  }
+
+  /* Fix form fields properly */
+  :root input,
+  :root textarea,
+  :root select {
+    color: var(--text-primary) !important;
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    color: var(--text-primary) !important;
   }
 
   /* Ensure MUI fields inherit proper colors */
