@@ -15,15 +15,11 @@ export interface BlogPost {
   content?: Record<Locale, string>;
 }
 
-// Client-side blog loading through API
+// Client-side blog loading through server actions
 export async function loadBlogPosts(): Promise<BlogPost[]> {
   try {
-    const response = await fetch('/api/blog');
-    if (!response.ok) {
-      throw new Error('Failed to load blog posts');
-    }
-    const data = await response.json();
-    return data.posts || [];
+    const { getAllBlogPostsAction } = await import('@/actions/blog-actions');
+    return await getAllBlogPostsAction();
   } catch (error) {
     console.error('Error loading blog posts:', error);
     return [];
@@ -33,12 +29,8 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
 // Get single blog post
 export async function getBlogPostData(slug: string): Promise<BlogPost | null> {
   try {
-    const response = await fetch(`/api/blog?slug=${slug}`);
-    if (!response.ok) {
-      throw new Error('Failed to load blog post');
-    }
-    const data = await response.json();
-    return data.post || null;
+    const { getBlogPostAction } = await import('@/actions/blog-actions');
+    return await getBlogPostAction(slug);
   } catch (error) {
     console.error('Error loading blog post:', error);
     return null;
@@ -49,13 +41,10 @@ export async function getBlogPostData(slug: string): Promise<BlogPost | null> {
 export async function getBlogPostContent(slug: string, language: string = 'en'): Promise<string> {
   try {
     console.log(`Fetching content for ${slug} in language: ${language}`);
-    const response = await fetch(`/api/blog?slug=${slug}&language=${language}&content=true`);
-    if (!response.ok) {
-      throw new Error('Failed to load blog content');
-    }
-    const data = await response.json();
-    console.log(`Received content for ${slug} in ${language}:`, data.content ? 'found' : 'not found');
-    return data.content || '';
+    const { getBlogPostContentAction } = await import('@/actions/blog-actions');
+    const content = await getBlogPostContentAction(slug, language);
+    console.log(`Received content for ${slug} in ${language}:`, content ? 'found' : 'not found');
+    return content || '';
   } catch (error) {
     console.error('Error loading blog content:', error);
     return '';
