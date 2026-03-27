@@ -264,6 +264,52 @@
     color: var(--text-primary) !important;
   }
 
+  /* Ultra-specific blog form field fixes */
+  .bg-card input[type="text"],
+  .bg-card input[type="search"],
+  .bg-card input[type="email"],
+  .bg-card textarea,
+  .bg-card select {
+    color: #111214 !important; /* Force light mode text color */
+    background-color: #ffffff !important; /* Force light mode background */
+  }
+
+  .dark .bg-card input[type="text"],
+  .dark .bg-card input[type="search"],
+  .dark .bg-card input[type="email"],
+  .dark .bg-card textarea,
+  .dark .bg-card select {
+    color: #e8e9eb !important; /* Force dark mode text color */
+    background-color: #1a1c20 !important; /* Force dark mode background */
+  }
+
+  /* Force blog search field specifically */
+  input[placeholder*="Search"],
+  input[placeholder*="Buscar"] {
+    color: #111214 !important;
+    -webkit-text-fill-color: #111214 !important;
+  }
+
+  .dark input[placeholder*="Search"],
+  .dark input[placeholder*="Buscar"] {
+    color: #e8e9eb !important;
+    -webkit-text-fill-color: #e8e9eb !important;
+  }
+
+  /* Force all inputs in light mode */
+  :root input,
+  :root textarea,
+  :root select {
+    color: #111214 !important;
+  }
+
+  /* Force all inputs in dark mode */
+  .dark input,
+  .dark textarea,
+  .dark select {
+    color: #e8e9eb !important;
+  }
+
   /* Ensure MUI fields inherit proper colors */
   .MuiInputBase-input,
   .MuiOutlinedInput-input,
