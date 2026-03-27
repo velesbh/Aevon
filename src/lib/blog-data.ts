@@ -15,11 +15,11 @@ export interface BlogPost {
   content?: Record<Locale, string>;
 }
 
-// Client-side blog loading through static data
+// Client-side blog loading through generated data
 export async function loadBlogPosts(): Promise<BlogPost[]> {
   try {
-    const { getStaticBlogPosts } = await import('@/data/static-blog-data');
-    return getStaticBlogPosts();
+    const { blogPosts } = await import('@/data/generated-blog-data');
+    return blogPosts;
   } catch (error) {
     console.error('Error loading blog posts:', error);
     return [];
@@ -29,8 +29,8 @@ export async function loadBlogPosts(): Promise<BlogPost[]> {
 // Get single blog post
 export async function getBlogPostData(slug: string): Promise<BlogPost | null> {
   try {
-    const { getStaticBlogPost } = await import('@/data/static-blog-data');
-    return getStaticBlogPost(slug);
+    const { getBlogPost } = await import('@/data/generated-blog-data');
+    return getBlogPost(slug);
   } catch (error) {
     console.error('Error loading blog post:', error);
     return null;
@@ -40,8 +40,8 @@ export async function getBlogPostData(slug: string): Promise<BlogPost | null> {
 // Get blog post content
 export async function getBlogPostContent(slug: string, language: string = 'en'): Promise<string> {
   try {
-    const { getStaticBlogPostContent } = await import('@/data/static-blog-data');
-    const content = getStaticBlogPostContent(slug, language);
+    const { getBlogPostContent } = await import('@/data/generated-blog-data');
+    const content = getBlogPostContent(slug, language);
     return content || '';
   } catch (error) {
     console.error('Error loading blog content:', error);

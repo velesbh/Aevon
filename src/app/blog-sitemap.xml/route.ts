@@ -1,10 +1,9 @@
-import { getAllBlogPosts } from '@/lib/blog-loader';
+import { blogPosts } from '@/data/generated-blog-data';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600; // Revalidate every hour
 
 export async function GET() {
-  const posts = await getAllBlogPosts();
   const baseUrl = 'https://aevon.ink';
   
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>

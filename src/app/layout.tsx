@@ -5,9 +5,6 @@ import { LanguageProvider } from "@/lib/i18n";
 import { Header } from "@/components/header";
 import ThemeRegistry from "@/components/ThemeRegistry";
 import { TauriInit } from "@/components/tauri-init";
-import { initializeStaticBlogData } from "@/data/static-blog-data";
-
-initializeStaticBlogData();
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://aevon.ink'),

@@ -1,18 +1,17 @@
 import { Metadata } from "next";
-import { getAllBlogPosts, getBlogPost } from "@/lib/blog-loader";
+import { blogPosts, getBlogPost } from "@/data/generated-blog-data";
 import { type BlogPost } from "@/lib/blog-data";
 import BlogPostClient from "./blog-post-client";
 
 export async function generateStaticParams() {
-  const posts = await getAllBlogPosts();
-  return posts.map((post) => ({
+  return blogPosts.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getBlogPost(slug);
+  const post = getBlogPost(slug);
 
   if (!post) {
     return {

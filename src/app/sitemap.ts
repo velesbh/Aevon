@@ -1,12 +1,11 @@
 import { MetadataRoute } from 'next';
-import { getAllBlogPosts } from '@/lib/blog-loader';
+import { blogPosts } from '@/data/generated-blog-data';
 import { docPages } from '@/data/docs';
 
 export const dynamic = "force-static";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://aevon.ink';
-  const blogPosts = await getAllBlogPosts();
 
   const staticRoutes = [
     {
@@ -48,15 +47,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // Blog routes
-  const blogRoutes = blogPosts.map((post) => ({
+  const blogRoutes = (blogPosts || []).map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
     lastModified: new Date(post.publishDate).toISOString(),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
-    
   }));
 
-  const blogSpanishRoutes = blogPosts.map((post) => ({
+  const blogSpanishRoutes = (blogPosts || []).map((post) => ({
     url: `${baseUrl}/es/blog/${post.slug}`,
     lastModified: new Date(post.publishDate).toISOString(),
     changeFrequency: 'monthly' as const,
@@ -64,7 +62,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // Documentation routes
-  const docRoutes = docPages.map((page) => ({
+  const docRoutes = (docPages || []).map((page) => ({
     url: `${baseUrl}/docs/${page.slug}`,
     lastModified: new Date().toISOString(),
     changeFrequency: 'monthly' as const,

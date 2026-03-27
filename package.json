@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "prebuild": "node scripts/generate-blog-data.js",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint"
