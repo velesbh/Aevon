@@ -3,49 +3,35 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/lib/i18n';
-import { Github, Monitor, Smartphone, Globe, BookOpen, Map, Users, Database, ArrowRight, Type } from 'lucide-react';
-import { motion, Variants } from 'framer-motion';
-
-// --- Doodles ---
-const DoodleArrow = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M10 50 Q 50 10 90 50 M 70 30 L 92 51 L 65 70" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
-
-const DoodleCircle = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M50,10 C75,8 92,25 88,50 C85,75 60,92 35,85 C15,78 8,50 15,30 C20,15 40,8 55,12" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
-  </svg>
-);
-
-const DoodleUnderline = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 30" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" className={className}>
-    <path d="M5 20 Q 30 5 60 15 T 95 10" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-  </svg>
-);
-
-const DoodleStar = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <path d="M50 10 Q 52 40 90 50 Q 55 55 50 90 Q 45 55 10 50 Q 45 42 50 10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-  </svg>
-);
+import { Github, Monitor, Smartphone, Globe, ArrowRight, ArrowDown, Map, Users, BookOpen, Lightbulb, Cloud, Languages, Pen, ChevronRight } from 'lucide-react';
+import { motion, type Variants } from 'framer-motion';
+import { StructuredData } from '@/components/structured-data';
+import { CursorStroke, SketchBackground, DoodleUnderline } from '@/components/landing/sketch-effects';
+import { ScrollEffects } from '@/components/landing/scroll-effects';
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } }
+  hidden: { opacity: 0, y: 30 },
+  visible: (i: number = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.6, delay: i * 0.1, ease: [0.25, 0.4, 0.25, 1] as [number, number, number, number] } })
 };
 
 const stagger: Variants = {
-  visible: { transition: { staggerChildren: 0.15 } }
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } }
 };
 
 export default function Home() {
   const router = useRouter();
   const { t } = useLanguage();
   const [isTauri, setIsTauri] = useState<boolean | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+  
+  // Fix hydration issue for useScroll
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
   useEffect(() => {
     const tauriEnv = typeof window !== 'undefined' &&
@@ -53,677 +39,466 @@ export default function Home() {
     if (tauriEnv) {
       router.replace('/dashboard');
     }
-    // Avoid synchronous state update that causes lint error
     setTimeout(() => setIsTauri(tauriEnv), 0);
   }, [router]);
 
   if (isTauri === null || isTauri === true) {
-    return <div className="min-h-screen bg-background flex items-center justify-center"></div>;
+    return <div className="min-h-screen bg-background flex items-center justify-center" />;
   }
 
+  
+  const features = [
+    {
+      label: t("landing.feat.manuscript.label"),
+      title: t("landing.feat.manuscript.title"),
+      desc: t("landing.feat.manuscript.desc"),
+      src: "/manuscript.png",
+      alt: "Manuscript Editor",
+    },
+    {
+      label: t("landing.feat.characters.label"),
+      title: t("landing.feat.characters.title"),
+      desc: t("landing.feat.characters.desc"),
+      src: "/characters dash.png",
+      alt: "Character Profiles",
+    },
+    {
+      label: t("landing.feat.export.label"),
+      title: t("landing.feat.export.title"),
+      desc: t("landing.feat.export.desc"),
+      src: "/export.png",
+      alt: "Export Engine",
+    },
+  ];
+
+  const bentoItems = [
+    { icon: <Map className="w-5 h-5" />, title: t("landing.bento.maps.title"), desc: t("landing.bento.maps.desc") },
+    { icon: <BookOpen className="w-5 h-5" />, title: t("landing.bento.lore.title"), desc: t("landing.bento.lore.desc") },
+    { icon: <Lightbulb className="w-5 h-5" />, title: t("landing.bento.ideas.title"), desc: t("landing.bento.ideas.desc") },
+    { icon: <Users className="w-5 h-5" />, title: t("landing.bento.relationships.title"), desc: t("landing.bento.relationships.desc") },
+    { icon: <Cloud className="w-5 h-5" />, title: t("landing.bento.sync.title"), desc: t("landing.bento.sync.desc") },
+    { icon: <Languages className="w-5 h-5" />, title: t("landing.bento.i18n.title"), desc: t("landing.bento.i18n.desc") },
+  ];
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 1 }}
-      className="flex flex-col items-center w-full min-h-screen bg-background text-foreground font-sans selection:bg-primary/20 relative overflow-hidden"
-    >
-      
-      {/* Initial Screen Reveal Animation */}
-      <motion.div
-        initial={{ y: 0 }}
-        animate={{ y: "-100%" }}
-        transition={{ duration: 1, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
-        className="fixed inset-0 z-50 bg-background flex flex-col items-center justify-center pointer-events-none"
-      >
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="text-4xl font-black flex items-center gap-4"
-        >
-          <div className="w-12 h-12 rounded-lg bg-foreground text-background flex items-center justify-center text-xl">A</div>
-          Aevon
-        </motion.div>
-      </motion.div>
+    <div className="flex flex-col items-center w-full min-h-screen bg-[var(--background-app)] text-[var(--text-primary)] font-sans selection:bg-[var(--state-layer-primary)] relative overflow-hidden">
+      <StructuredData />
+      <CursorStroke />
 
-      {/* Background Gradients and Strokes */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex items-center justify-center">
-        <svg className="absolute w-[200%] h-[200%] opacity-[0.02] text-foreground" xmlns="http://www.w3.org/2000/svg" style={{ transform: "rotate(-15deg)" }}>
-          <defs>
-            <pattern id="bg-lines" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M0,30 L60,30" stroke="currentColor" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#bg-lines)" />
-        </svg>
-        <div className="absolute -top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/20 rounded-full blur-[180px] opacity-40" />
-        <div className="absolute top-1/3 -right-1/4 w-1/2 h-1/2 bg-blue-500/10 rounded-full blur-[150px] opacity-30" />
-      </div>
-
-      {/* Hero */}
-      <main className="w-full flex-1 flex flex-col items-center justify-center min-h-[100dvh] pt-32 pb-16 px-6 z-10 relative">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="flex flex-col items-center text-center max-w-5xl w-full relative mt-16 md:mt-0"
-        >
-          {/* Floating Doodles */}
-          <motion.div
-            animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-16 -left-8 md:-top-12 md:-left-12 text-primary/40 hidden sm:block w-20 h-20 md:w-24 md:h-24 pointer-events-none"
-          >
-            <DoodleStar />
-          </motion.div>
-          <motion.div
-            animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-32 -right-8 md:top-20 md:-right-16 text-blue-500/40 hidden sm:block w-16 h-16 md:w-20 md:h-20 pointer-events-none"
-          >
-            <DoodleCircle />
-          </motion.div>
-
-          <motion.div
-            variants={fadeUp}
-            className="mb-8 rounded-full px-5 py-2 text-sm font-medium bg-primary/10 text-primary border border-primary/20 backdrop-blur-sm shadow-sm"
-            style={{ transitionDelay: '0.8s' }} // Wait for screen reveal
-          >
-            {t("landing.hero.badge") || "The definitive world-building environment"}
-          </motion.div>
-          
-          <motion.div variants={fadeUp} className="relative mb-6 w-full" style={{ transitionDelay: '0.9s' }}>
-            <h1 className="text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-black text-center tracking-tighter text-foreground leading-[1.05] relative z-10 px-2">
-              {t("landing.hero.title")?.split(' ').map((word: string, i: number) => (
-                <span key={i} className="inline-block mr-[0.25em]">
-                  {word}
-                </span>
-              )) || "Craft Your Universe."}
-            </h1>
-            <div className="absolute -bottom-2 md:-bottom-4 left-[15%] right-[15%] md:left-1/4 md:right-1/4 h-6 md:h-8 text-primary/50 -z-10 transform -rotate-2">
-              <DoodleUnderline className="w-full h-full" />
+      {/* HERO */}
+      {isHydrated ? (
+        <ScrollEffects>
+          <div className="relative w-full min-h-[110dvh] flex flex-col items-center justify-center px-6 pt-28 pb-32 overflow-hidden">
+            {/* Background decorations */}
+            <SketchBackground variant="hero" />
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-[-30%] left-[-25%] w-[75%] h-[55%] bg-[var(--primary)]/[0.04] rounded-full blur-[160px]" />
+              <div className="absolute bottom-[-40%] right-[-25%] w-[65%] h-[45%] bg-[var(--primary)]/[0.03] rounded-full blur-[140px]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[200px] bg-gradient-to-t from-[var(--background-app)] to-transparent" />
             </div>
-          </motion.div>
-          
-          <motion.p variants={fadeUp} className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl font-light leading-relaxed px-4" style={{ transitionDelay: '1.0s' }}>
-            {t("landing.hero.desc") || "Aevon unifies your manuscript, interactive maps, and relationship networks into a single, cohesive workspace. Built for creators who demand depth."}
-          </motion.p>
-          
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto relative px-6 sm:px-0" style={{ transitionDelay: '1.1s' }}>
-            <div className="absolute -left-16 top-1/2 -translate-y-1/2 text-primary/60 hidden lg:block w-12 h-12 transform -rotate-12 pointer-events-none">
-              <DoodleArrow />
-            </div>
-            <Button size="lg" className="rounded-full px-12 h-16 text-xl font-semibold shadow-sm hover:shadow-md transition-all hover:-translate-y-1" asChild>
-              <Link href="/login">
-                {t("landing.hero.startBuilding") || "Start Building"}
-                <ArrowRight className="ml-2 w-6 h-6" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="rounded-full px-10 h-16 text-lg font-medium border-border/50 bg-background/50 backdrop-blur-sm hover:bg-muted/50 transition-all" asChild>
-              <Link href="https://github.com/enzonic-llc/Aevon" target="_blank">
-                <Github className="mr-2 h-6 w-6" />
-                View on GitHub
-              </Link>
-            </Button>
-          </motion.div>
-        </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-muted-foreground/50 hidden md:flex"
-        >
-          <span className="text-xs uppercase tracking-widest font-semibold">Scroll to explore</span>
-          <motion.div 
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-px h-12 bg-gradient-to-b from-current to-transparent"
-          />
-        </motion.div>
-      </main>
+            <div className="relative z-10 flex flex-col lg:flex-row items-center gap-12 lg:gap-20 max-w-7xl w-full px-6">
+              {/* Left content */}
+              <motion.div
+                initial="hidden" animate="visible" variants={stagger}
+                className="flex-1 text-center lg:text-left"
+              >
+                {/* Badge */}
+                <motion.div variants={fadeUp} custom={0}
+                  className="mb-8 rounded-full px-5 py-2 text-sm font-medium bg-[var(--state-layer-primary)] text-[var(--primary)] border border-[var(--primary)]/20 backdrop-blur-sm inline-block"
+                >
+                  {t("landing.hero.badge")}
+                </motion.div>
 
-      {/* Mention Showcase Section */}
-      <section className="w-full py-32 px-6 border-t border-border/40 relative z-10 bg-primary/5">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
-        <div className="max-w-7xl mx-auto relative">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7 }}
-            className="text-center mb-16"
-          >
-            <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-2xl mb-6 text-primary">
-              <Type className="w-8 h-8" />
+                {/* Title */}
+                <motion.div variants={fadeUp} custom={1} className="relative mb-6">
+                  <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.05]">
+                    {t("landing.hero.title")}
+                  </h1>
+                  <DoodleUnderline className="absolute -bottom-2 left-[0%] right-[10%] h-3 md:h-4 opacity-40" />
+                </motion.div>
+
+                {/* Subtitle */}
+                <motion.p variants={fadeUp} custom={2}
+                  className="text-lg sm:text-xl text-[var(--text-secondary)] mb-12 max-w-2xl font-light leading-relaxed"
+                >
+                  {t("landing.hero.desc")}
+                </motion.p>
+
+                {/* CTAs */}
+                <motion.div variants={fadeUp} custom={3} className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                  <Button size="lg" className="rounded-full px-10 h-14 text-lg font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5" asChild>
+                    <Link href="/login">
+                      {t("landing.hero.cta")}
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Link>
+                  </Button>
+                  <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg font-medium border-[var(--border-ui)] bg-[var(--background-surface)]/50 backdrop-blur-sm hover:bg-[var(--surface-state-hover)] transition-all" asChild>
+                    <Link href="https://github.com/enzonic-llc/Aevon" target="_blank">
+                      <Github className="mr-2 h-5 w-5" />
+                      {t("landing.hero.github")}
+                    </Link>
+                  </Button>
+                </motion.div>
+              </motion.div>
+
+              {/* Right: Dashboard screenshot */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.85, rotateY: 15 }}
+                animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+                transition={{ duration: 1.2, delay: 0.4, ease: [0.25, 0.4, 0.25, 1] }}
+                className="flex-1 max-w-2xl relative"
+                style={{ perspective: "2000px", transformStyle: "preserve-3d" }}
+              >
+                <motion.div 
+                  className="relative rounded-2xl overflow-hidden border border-[var(--border-ui)]/30 backdrop-blur-sm bg-[var(--background-surface)]/10"
+                  style={{ 
+                    perspective: "1500px",
+                    transform: "rotateX(-12deg) rotateY(12deg) translateZ(50px)",
+                    transformStyle: "preserve-3d"
+                  }}
+                  whileHover={{ 
+                    transform: "rotateX(-8deg) rotateY(8deg) translateZ(80px) scale(1.02)",
+                    transition: { duration: 0.4, ease: "easeOut" }
+                  }}
+                >
+                  {/* Glass effect overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+                  
+                  {/* Image with enhanced styling */}
+                  <div className="relative">
+                    <Image 
+                      src="/dashboard.png" 
+                      alt="Aevon Dashboard" 
+                      width={1920} 
+                      height={1080} 
+                      className="w-full h-auto" 
+                      priority 
+                      style={{ 
+                        filter: "contrast(1.05) saturate(1.1)",
+                        transform: "translateZ(20px)"
+                      }}
+                    />
+                    
+                    {/* Subtle gradient overlay for depth */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--background-app)]/30 via-transparent to-transparent opacity-80 pointer-events-none" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[var(--primary)]/5 pointer-events-none" />
+                  </div>
+                  
+                  {/* Enhanced shadow with 3D effect */}
+                  <div 
+                    className="absolute -inset-4 rounded-2xl opacity-40"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.2) 100%)",
+                      filter: "blur(20px)",
+                      transform: "translateZ(-20px) scaleY(0.8)"
+                    }}
+                  />
+                  
+                  {/* Glow effect */}
+                  <div className="absolute -bottom-12 left-[10%] right-[10%] h-24 bg-[var(--primary)]/[0.2] blur-[80px] rounded-full" />
+                  
+                  {/* Edge highlights */}
+                  <div className="absolute inset-0 rounded-2xl border border-white/10 shadow-inner" />
+                </motion.div>
+              </motion.div>
             </div>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              {t("landing.mentions.title") || "Worldbuilding at the speed of thought"}
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              {t("landing.mentions.desc") || "Never break your flow. Just type @ to instantly reference characters, locations, and items. They automatically link to your database."}
+
+            {/* Scroll hint */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 2, duration: 1 }}
+              className="absolute bottom-8 left-1/2 -translate-x-1/2 flex-col items-center gap-2 text-[var(--text-tertiary)] hidden md:flex"
+            >
+              <span className="text-xs uppercase tracking-[0.2em] font-semibold">{t("landing.hero.scrollHint")}</span>
+              <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}>
+                <ArrowDown className="w-4 h-4" />
+              </motion.div>
+            </motion.div>
+          </div>
+        </ScrollEffects>
+      ) : (
+        // Non-hydrated fallback - static hero
+        <div className="relative w-full min-h-[110dvh] flex flex-col items-center justify-center px-6 pt-28 pb-32 overflow-hidden">
+          <SketchBackground variant="hero" />
+          <div className="relative z-10 flex flex-col items-center text-center max-w-5xl w-full">
+            <div className="mb-8 rounded-full px-5 py-2 text-sm font-medium bg-[var(--state-layer-primary)] text-[var(--primary)] border border-[var(--primary)]/20 backdrop-blur-sm">
+              {t("landing.hero.badge")}
+            </div>
+            <div className="relative mb-6">
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[1.05]">
+                {t("landing.hero.title")}
+              </h1>
+              <DoodleUnderline className="absolute -bottom-2 left-[10%] right-[10%] h-3 md:h-4 opacity-40" />
+            </div>
+            <p className="text-lg sm:text-xl md:text-2xl text-[var(--text-secondary)] mb-12 max-w-3xl font-light leading-relaxed">
+              {t("landing.hero.desc")}
             </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative"
-          >
-            <div className="absolute -top-10 -right-10 w-32 h-32 text-primary/20 transform rotate-45 z-0">
-              <DoodleStar />
+            <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+              <Button size="lg" className="rounded-full px-10 h-14 text-lg font-semibold shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5" asChild>
+                <Link href="/login">
+                  {t("landing.hero.cta")}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="rounded-full px-8 h-14 text-lg font-medium border-[var(--border-ui)] bg-[var(--background-surface)]/50 backdrop-blur-sm hover:bg-[var(--surface-state-hover)] transition-all" asChild>
+                <Link href="https://github.com/enzonic-llc/Aevon" target="_blank">
+                  <Github className="mr-2 h-5 w-5" />
+                  {t("landing.hero.github")}
+                </Link>
+              </Button>
             </div>
-            <MentionShowcase t={t} />
-          </motion.div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════ TRUST BAR ═══════ */}
+      <section className="w-full py-8 px-6 border-y border-[var(--border-ui)]/40 bg-[var(--surface-container)]/30 backdrop-blur-sm z-10 relative">
+        <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-x-12 gap-y-4">
+          {[
+            { icon: <Github className="w-4 h-4" />, text: t("landing.trust.opensource") },
+            { icon: <Pen className="w-4 h-4" />, text: t("landing.trust.free") },
+            { icon: <Monitor className="w-4 h-4" />, text: t("landing.trust.desktop") },
+            { icon: <Cloud className="w-4 h-4" />, text: t("landing.trust.offline") },
+          ].map((item, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.4 }}
+              className="flex items-center gap-2.5 text-sm font-medium text-[var(--text-secondary)]"
+            >
+              <span className="text-[var(--primary)]">{item.icon}</span>
+              {item.text}
+            </motion.div>
+          ))}
         </div>
       </section>
 
-      {/* Alternating Features Section */}
-      <section className="w-full py-32 px-6 relative z-10">
-        <div className="max-w-7xl mx-auto flex flex-col gap-40">
-          
-          {/* Feature 1 */}
-          <FeatureShowcase 
-            index={1}
-            icon={<BookOpen className="w-8 h-8" />}
-            title={t("landing.bento.feat1.title") || "Distraction-Free Manuscript"}
-            description={t("landing.bento.feat1.desc") || "Write in a clean, focused environment that automatically links character names, locations, and items to your world database as you type."}
-            visual={<TypingStory story={t("landing.bento.feat1.story") || "The shadow crept across the ancient map, revealing secrets long forgotten by the realm..."} />}
-            align="left"
-          />
+      {/* ═══════ FEATURE SHOWCASE ═══════ */}
+      <section className="w-full py-24 md:py-32 px-6 relative z-10 overflow-hidden">
+        <SketchBackground variant="features" />
+        <div className="max-w-7xl mx-auto flex flex-col gap-28 md:gap-40">
+          {features.map((feat, idx) => {
+            const isReversed = idx % 2 === 1;
+            return (
+              <div key={idx} className={`flex flex-col gap-12 lg:gap-20 items-center ${isReversed ? 'lg:flex-row-reverse' : 'lg:flex-row'}`}>
+                {/* Text */}
+                <motion.div
+                  initial={{ opacity: 0, x: isReversed ? 40 : -40 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 0.7 }}
+                  className="flex-1 w-full"
+                >
+                  <span className="inline-block mb-4 text-xs font-bold uppercase tracking-[0.2em] text-[var(--primary)] bg-[var(--state-layer-primary)] px-3 py-1 rounded-full">
+                    {feat.label}
+                  </span>
+                  <h3 className="text-3xl md:text-5xl font-bold mb-5 tracking-tight">{feat.title}</h3>
+                  <p className="text-lg text-[var(--text-secondary)] leading-relaxed">{feat.desc}</p>
+                </motion.div>
 
-          {/* Feature 2 */}
-          <FeatureShowcase 
-            index={2}
-            icon={<Map className="w-8 h-8" />}
-            title={t("landing.bento.feat2.title") || "Interactive Cartography"}
-            description={t("landing.bento.feat2.desc") || "Upload maps and drop pins linking directly to your world bible."}
-            visual={<MapVisual />}
-            align="right"
-          />
-
-          {/* Feature 3 */}
-          <FeatureShowcase 
-            index={3}
-            icon={<Users className="w-8 h-8" />}
-            title={t("landing.bento.feat3.title") || "Relationship Webs"}
-            description={t("landing.bento.feat3.desc") || "Visualize complex character dynamics and political factions automatically."}
-            visual={<NetworkVisual />}
-            align="left"
-          />
-
-          {/* Feature 4 */}
-          <FeatureShowcase 
-            index={4}
-            icon={<Database className="w-8 h-8" />}
-            title={t("landing.bento.feat4.title") || "Enterprise-Grade Storage"}
-            description={t("landing.bento.feat4.desc") || "Every Aevon workspace comes with massive storage for all your world-building assets. Never worry about hitting limits."}
-            visual={<StorageVisual />}
-            align="right"
-          />
-
+                {/* Screenshot */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, rotateY: isReversed ? -15 : 15 }}
+                  whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 1, delay: 0.15 }}
+                  className="flex-1 w-full"
+                  style={{ perspective: "2000px", transformStyle: "preserve-3d" }}
+                >
+                  <motion.div 
+                    className="relative rounded-2xl overflow-hidden border border-[var(--border-ui)]/30 backdrop-blur-sm bg-[var(--background-surface)]/10"
+                    style={{ 
+                      perspective: "1500px",
+                      transform: `rotateX(-10deg) rotateY(${isReversed ? '-10deg' : '10deg'}) translateZ(40px)`,
+                      transformStyle: "preserve-3d"
+                    }}
+                    whileHover={{ 
+                      transform: `rotateX(-6deg) rotateY(${isReversed ? '-6deg' : '6deg'}) translateZ(60px) scale(1.02)`,
+                      transition: { duration: 0.4, ease: "easeOut" }
+                    }}
+                  >
+                    {/* Glass effect overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent pointer-events-none" />
+                    
+                    {/* Image with enhanced styling */}
+                    <div className="relative">
+                      <Image 
+                        src={feat.src} 
+                        alt={feat.alt} 
+                        width={1920} 
+                        height={1080} 
+                        className="w-full h-auto" 
+                        style={{ 
+                          filter: "contrast(1.05) saturate(1.1)",
+                          transform: "translateZ(20px)"
+                        }}
+                      />
+                      
+                      {/* Subtle gradient overlay for depth */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--background-app)]/30 via-transparent to-transparent opacity-80 pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-[var(--primary)]/5 pointer-events-none" />
+                    </div>
+                    
+                    {/* Enhanced shadow with 3D effect */}
+                    <div 
+                      className="absolute -inset-4 rounded-2xl opacity-40"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.2) 100%)",
+                        filter: "blur(20px)",
+                        transform: "translateZ(-20px) scaleY(0.8)"
+                      }}
+                    />
+                    
+                    {/* Glow effect */}
+                    <div className="absolute -bottom-8 left-[10%] right-[10%] h-16 bg-[var(--primary)]/[0.15] blur-[60px] rounded-full" />
+                    
+                    {/* Edge highlights */}
+                    <div className="absolute inset-0 rounded-2xl border border-white/10 shadow-inner" />
+                  </motion.div>
+                </motion.div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Multi-platform */}
-      <section className="w-full py-32 px-6 relative z-10 border-t border-border/40 bg-muted/10">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
-            initial={{ opacity: 0, y: 40 }}
+      {/* ═══════ BENTO GRID ═══════ */}
+      <section className="w-full py-24 md:py-32 px-6 relative z-10 border-t border-[var(--border-ui)]/40 bg-[var(--surface-container)]/20 overflow-hidden">
+        <SketchBackground variant="bento" />
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-20 text-center relative"
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
-            <div className="absolute top-0 left-1/4 w-16 h-16 text-primary/30 transform -rotate-12 hidden md:block">
-              <DoodleCircle />
-            </div>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-              {t("landing.platforms.title") || "Available Everywhere"}
-            </h2>
-            <p className="text-muted-foreground text-xl max-w-3xl mx-auto">
-              {t("landing.platforms.desc") || "Seamlessly sync your workspace across all your devices."}
-            </p>
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5">{t("landing.bento.title")}</h2>
+            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">{t("landing.bento.desc")}</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <PlatformCard
-              icon={<Globe className="w-8 h-8" />}
-              title={t("landing.platforms.web.title") || "Web"}
-              description={t("landing.platforms.web.desc") || "Access from any browser. Always up to date."}
-              action={<Link href="/login" className="text-base font-semibold hover:text-primary transition-colors">{t("landing.platforms.web.action") || "Open App \u2192"}</Link>}
-              delay={0}
-            />
-            <PlatformCard
-              icon={<Monitor className="w-8 h-8" />}
-              title={t("landing.platforms.desktop.title") || "Desktop"}
-              description={t("landing.platforms.desktop.desc") || "Native performance for macOS, Windows, and Linux."}
-              action={<a href="https://apps.enzonic.com/app/fXyEGedm1ROKxz30lCCe" target="_blank" rel="noopener noreferrer" className="text-base font-semibold text-primary hover:text-primary/80 transition-colors">{t("landing.platforms.desktop.action") || "Download App \u2192"}</a>}
-              highlight
-              delay={0.2}
-            />
-            <PlatformCard
-              icon={<Smartphone className="w-8 h-8" />}
-              title={t("landing.platforms.mobile.title") || "Mobile"}
-              description={t("landing.platforms.mobile.desc") || "Review and capture ideas on the go."}
-              action={<span className="text-base text-muted-foreground font-medium">{t("landing.platforms.mobile.action") || "Coming Soon"}</span>}
-              delay={0.4}
-            />
+          <motion.div
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={stagger}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
+            {bentoItems.map((item, i) => (
+              <motion.div
+                key={i}
+                variants={fadeUp}
+                custom={i}
+                className="group p-6 rounded-2xl border border-[var(--border-ui)]/50 bg-[var(--background-surface)] hover:bg-[var(--background-surface-hover)] transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[var(--state-layer-primary)] text-[var(--primary)] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                  {item.icon}
+                </div>
+                <h3 className="font-semibold text-base mb-1.5">{item.title}</h3>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      
+      {/* ═══════ PLATFORMS ═══════ */}
+      <section id="downloads" className="w-full py-24 md:py-32 px-6 relative z-10 border-t border-[var(--border-ui)]/40 bg-[var(--surface-container)]/20">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-5">{t("landing.platforms.title")}</h2>
+            <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">{t("landing.platforms.desc")}</p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              { icon: <Globe className="w-7 h-7" />, title: t("landing.platforms.web.title"), desc: t("landing.platforms.web.desc"), action: <Link href="/login" className="font-semibold text-[var(--primary)] hover:underline inline-flex items-center gap-1">{t("landing.platforms.web.action")} <ChevronRight className="w-4 h-4" /></Link>, highlight: false },
+              { icon: <Monitor className="w-7 h-7" />, title: t("landing.platforms.desktop.title"), desc: t("landing.platforms.desktop.desc"), action: <a href="https://apps.enzonic.com/app/fXyEGedm1ROKxz30lCCe" target="_blank" rel="noopener noreferrer" className="font-semibold text-[var(--primary)] hover:underline inline-flex items-center gap-1">{t("landing.platforms.desktop.action")} <ChevronRight className="w-4 h-4" /></a>, highlight: true },
+              { icon: <Smartphone className="w-7 h-7" />, title: t("landing.platforms.mobile.title"), desc: t("landing.platforms.mobile.desc"), action: <span className="text-[var(--text-tertiary)] font-medium">{t("landing.platforms.mobile.action")}</span>, highlight: false },
+            ].map((p, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15, duration: 0.5 }}
+                className={`p-8 rounded-2xl border flex flex-col items-center text-center transition-all duration-300 hover:-translate-y-1 hover:shadow-md ${p.highlight ? 'border-[var(--primary)]/30 bg-[var(--state-layer-primary)]/30' : 'border-[var(--border-ui)]/50 bg-[var(--background-surface)]'}`}
+              >
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 ${p.highlight ? 'bg-[var(--primary)] text-white' : 'bg-[var(--surface-container-high)] text-[var(--text-primary)]'}`}>
+                  {p.icon}
+                </div>
+                <h3 className="font-bold text-xl mb-2">{p.title}</h3>
+                <p className="text-[var(--text-secondary)] text-sm mb-6 flex-1">{p.desc}</p>
+                <div className="mt-auto text-sm">{p.action}</div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="w-full py-40 px-6 border-t border-border/40 bg-primary/5 relative z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent pointer-events-none z-0" />
-        
-        {/* Background floating elements */}
-        <motion.div 
-          animate={{ y: [0, -20, 0], x: [0, 10, 0] }} 
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-20 left-20 w-32 h-32 bg-primary/20 rounded-full blur-[50px] z-0" 
-        />
-        <motion.div 
-          animate={{ y: [0, 20, 0], x: [0, -10, 0] }} 
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-20 right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-[60px] z-0" 
-        />
-
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+      {/* ═══════ CTA ═══════ */}
+      <section className="w-full py-32 md:py-40 px-6 relative z-10 overflow-hidden">
+        <SketchBackground variant="cta" />
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--primary)]/[0.03] rounded-full blur-[140px]" />
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="max-w-4xl mx-auto text-center flex flex-col items-center relative z-10"
+          transition={{ duration: 0.7 }}
+          className="max-w-3xl mx-auto text-center flex flex-col items-center relative z-10"
         >
-          <div className="relative mb-8">
-            <h2 className="text-5xl md:text-7xl font-black tracking-tight">
-              {t("landing.cta.title") || "Ready to build your world?"}
-            </h2>
-            <div className="absolute -top-6 -right-12 w-16 h-16 text-primary/40 transform rotate-12">
-              <DoodleStar />
-            </div>
-          </div>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl font-light">
-            {t("landing.cta.desc") || "Export your entire workspace at any time. Aevon guarantees your data remains yours, always accessible and secure."}
-          </p>
-          <Button size="lg" className="rounded-full px-14 h-20 text-2xl font-semibold shadow-sm hover:shadow-md hover:-translate-y-2 transition-transform duration-300" asChild>
-            <Link href="/login">{t("landing.cta.button") || "Create Your Workspace"}</Link>
+          <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6">{t("landing.cta.title")}</h2>
+          <p className="text-xl text-[var(--text-secondary)] mb-10 max-w-xl font-light">{t("landing.cta.desc")}</p>
+          <Button size="lg" className="rounded-full px-12 h-16 text-xl font-semibold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300" asChild>
+            <Link href="/login">
+              {t("landing.cta.button")}
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Link>
           </Button>
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="w-full py-12 px-6 border-t border-border/40 bg-background text-sm relative z-10">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-muted-foreground">
-          <div className="flex items-center gap-3 font-semibold text-base text-foreground">
-            <div className="w-6 h-6 rounded bg-foreground text-background flex items-center justify-center text-[10px]">A</div>
-            Aevon
+      {/* ═══════ FOOTER ═══════ */}
+      <footer className="w-full py-12 px-6 border-t border-[var(--border-ui)]/40 bg-[var(--surface-container)]/20 relative z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-start gap-10 mb-10">
+            <div className="max-w-xs">
+              <div className="flex items-center gap-2.5 mb-3">
+                <Image src="/aevon.png" alt="Aevon" width={24} height={24} className="w-6 h-6" />
+                <span className="font-bold text-lg">Aevon</span>
+              </div>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{t("landing.footer.desc")}</p>
+            </div>
+            <div className="flex gap-16 text-sm">
+              <div className="flex flex-col gap-2.5">
+                <span className="font-semibold text-xs uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-1">{t("landing.footer.product")}</span>
+                <Link href="/#features" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">{t("landing.footer.features")}</Link>
+                <Link href="/docs" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">{t("landing.footer.docs")}</Link>
+                <Link href="/blog" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">{t("landing.footer.blog")}</Link>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <span className="font-semibold text-xs uppercase tracking-[0.15em] text-[var(--text-tertiary)] mb-1">{t("landing.footer.legal")}</span>
+                <Link href="/login" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">{t("landing.footer.signIn")}</Link>
+                <Link href="https://github.com/enzonic-llc/Aevon" target="_blank" className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">{t("landing.footer.github")}</Link>
+              </div>
+            </div>
           </div>
-          <div className="text-center">&copy; {new Date().getFullYear()} Enzonic LLC. {t("landing.footer.productBy") || "All rights reserved."}</div>
-          <div className="flex gap-8 text-base">
-            <Link href="https://github.com/enzonic-llc/Aevon" className="hover:text-foreground transition-colors">GitHub</Link>
-            <Link href="/login" className="hover:text-foreground transition-colors">Sign In</Link>
+          <div className="pt-6 border-t border-[var(--border-ui)]/30 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-[var(--text-tertiary)]">
+            <span>&copy; 2026 Enzonic LLC. All rights reserved.</span>
+            <span>{t("landing.footer.productBy")}</span>
           </div>
         </div>
       </footer>
-    </motion.div>
-  );
-}
-
-// --- Components ---
-
-function MentionShowcase({ t }: { t: (key: string) => string }) {
-  const [text, setText] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
-  const fullText = "The ancient sword was forged by @";
-  
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    let i = 0;
-    setText("");
-    setShowDropdown(false);
-
-    const typeChar = () => {
-      if (i < fullText.length) {
-        setText(fullText.substring(0, i + 1));
-        i++;
-        
-        if (fullText[i-1] === '@') {
-          setShowDropdown(true);
-        }
-        
-        timeout = setTimeout(typeChar, Math.random() * 50 + 40);
-      } else {
-        timeout = setTimeout(() => {
-          i = 0;
-          setText("");
-          setShowDropdown(false);
-          typeChar();
-        }, 4000);
-      }
-    };
-
-    timeout = setTimeout(typeChar, 1000);
-    return () => clearTimeout(timeout);
-  }, []);
-
-  return (
-    <div className="relative w-full max-w-2xl mx-auto bg-card rounded-2xl border border-border/50 shadow-2xl overflow-visible p-6 sm:p-8 min-h-[220px]">
-      <div className="flex gap-2 mb-6">
-        <div className="w-3 h-3 rounded-full bg-red-500/50" />
-        <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
-        <div className="w-3 h-3 rounded-full bg-green-500/50" />
-      </div>
-      <div className="font-mono text-lg sm:text-xl md:text-2xl text-foreground flex items-center flex-wrap leading-relaxed">
-        <span>{text}</span>
-        <motion.div
-          animate={{ opacity: [1, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8 }}
-          className="w-2 sm:w-3 h-6 sm:h-7 bg-primary ml-1 inline-block"
-        />
-      </div>
-      
-      {showDropdown && (
-        <motion.div
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="absolute top-28 sm:top-32 left-6 sm:left-10 md:left-48 w-[calc(100%-3rem)] sm:w-72 max-w-sm bg-popover border border-border/80 rounded-xl shadow-2xl overflow-hidden z-20"
-        >
-          <div className="px-4 py-2 text-xs font-semibold text-muted-foreground bg-muted/40 border-b border-border/50">
-            Select a mention
-          </div>
-          <div className="p-1.5 flex flex-col gap-1">
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary cursor-pointer border border-primary/20">
-              <div className="bg-primary/20 p-1.5 rounded-md"><Users className="w-4 h-4" /></div>
-              <div>
-                <div className="text-sm font-bold">Arthur Pendragon</div>
-                <div className="text-xs opacity-80">{t("landing.mentions.dropdown.character") || "Character"}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer text-foreground transition-colors">
-              <div className="bg-muted p-1.5 rounded-md"><Map className="w-4 h-4" /></div>
-              <div>
-                <div className="text-sm font-medium">Avalon</div>
-                <div className="text-xs text-muted-foreground">{t("landing.mentions.dropdown.location") || "Location"}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 cursor-pointer text-foreground transition-colors">
-              <div className="bg-muted p-1.5 rounded-md"><Database className="w-4 h-4" /></div>
-              <div>
-                <div className="text-sm font-medium">Excalibur</div>
-                <div className="text-xs text-muted-foreground">{t("landing.mentions.dropdown.item") || "Item"}</div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-    </div>
-  )
-}
-
-function FeatureShowcase({ index, icon, title, description, visual, align }: { index: number, icon: React.ReactNode, title: string, description: string, visual: React.ReactNode, align: 'left' | 'right' }) {
-  const isLeft = align === 'left';
-  
-  return (
-    <div className={`flex flex-col gap-12 lg:gap-20 items-center ${isLeft ? 'lg:flex-row' : 'lg:flex-row-reverse'}`}>
-      <motion.div 
-        initial={{ opacity: 0, x: isLeft ? -50 : 50 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8 }}
-        className="flex-1 w-full relative"
-      >
-        {/* Abstract doodle positioning based on index */}
-        {index === 1 && <div className="absolute -top-10 -left-10 w-20 h-20 text-primary/20"><DoodleCircle /></div>}
-        {index === 2 && <div className="absolute -bottom-10 -right-10 w-24 h-24 text-primary/20 transform rotate-180"><DoodleArrow /></div>}
-        {index === 3 && <div className="absolute -top-10 -right-10 w-16 h-16 text-primary/20"><DoodleStar /></div>}
-        
-        <div className="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-8 border border-primary/10">
-          {icon}
-        </div>
-        <h3 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">{title}</h3>
-        <p className="text-xl text-muted-foreground leading-relaxed">
-          {description}
-        </p>
-      </motion.div>
-      
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-100px" }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="flex-1 w-full"
-      >
-        <div className="relative w-full aspect-video md:aspect-[4/3] rounded-3xl border border-border/50 bg-card/40 backdrop-blur-sm overflow-hidden flex items-center justify-center p-6 shadow-2xl group">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-          {visual}
-        </div>
-      </motion.div>
     </div>
   );
-}
-
-function PlatformCard({ icon, title, description, action, highlight = false, delay = 0 }: { icon: React.ReactNode, title: string, description: string, action: React.ReactNode, highlight?: boolean, delay?: number }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.6, delay }}
-      className={`p-10 rounded-3xl border flex flex-col items-center text-center transition-all duration-300 backdrop-blur-sm hover:-translate-y-2 ${highlight ? 'border-primary/20 bg-primary/5 shadow-md' : 'border-border/40 bg-card/50 hover:bg-card/80 hover:shadow-md'}`}
-    >
-      <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-8 transition-transform duration-300 group-hover:scale-110 ${highlight ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-foreground'}`}>
-        {icon}
-      </div>
-      <h3 className="font-bold text-2xl mb-4">{title}</h3>
-      <p className="text-muted-foreground text-lg mb-8 flex-1">{description}</p>
-      <div className="mt-auto">
-        {action}
-      </div>
-    </motion.div>
-  );
-}
-
-// --- Visual Components for Showcase ---
-
-function TypingStory({ story }: { story: string }) {
-  const [text, setText] = useState("");
-
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
-    let i = 0;
-    setText("");
-
-    const typeChar = () => {
-      if (i < story.length) {
-        setText(story.substring(0, i + 1));
-        i++;
-        timeout = setTimeout(typeChar, Math.random() * 30 + 20);
-      } else {
-        timeout = setTimeout(() => {
-          i = 0;
-          setText("");
-          typeChar();
-        }, 5000);
-      }
-    };
-
-    timeout = setTimeout(typeChar, 1000);
-    return () => clearTimeout(timeout);
-  }, [story]);
-
-  const renderText = () => {
-    const parts = text.split(/(mapa|map|shadow|sombra|secrets|secretos)/i);
-    return parts.map((part, index) => {
-      const lower = part.toLowerCase();
-      if (["map", "mapa", "shadow", "sombra", "secrets", "secretos"].includes(lower)) {
-        return (
-          <span key={index} className="text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-md border border-primary/10 cursor-pointer shadow-sm">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-  };
-
-  return (
-    <div className="w-full h-full bg-background/80 rounded-xl border border-border/60 p-6 relative overflow-hidden font-mono text-base md:text-lg flex flex-col shadow-inner">
-      <div className="flex gap-2 mb-4 opacity-50">
-        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
-        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
-        <div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" />
-      </div>
-      <div className="w-1/3 h-3 bg-muted rounded-full mb-6" />
-      <div className="w-full flex-1 text-muted-foreground leading-loose break-words overflow-hidden text-left">
-        {renderText()}
-        <motion.span
-          animate={{ opacity: [1, 0] }}
-          transition={{ repeat: Infinity, duration: 0.8 }}
-          className="inline-block w-2 h-5 bg-primary align-middle ml-1"
-        />
-      </div>
-    </div>
-  );
-}
-
-function MapVisual() {
-  return (
-    <div className="w-full h-full relative overflow-hidden rounded-xl border border-border/50 bg-background/50">
-      <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary via-background to-background" />
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-1/2 left-1/2 w-6 h-6 bg-primary rounded-full shadow-sm -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-10"
-      >
-        <div className="w-2 h-2 bg-background rounded-full" />
-      </motion.div>
-      <motion.div
-        animate={{ scale: [1, 2], opacity: [0.5, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
-        className="absolute top-1/2 left-1/2 w-6 h-6 bg-primary/40 rounded-full -translate-x-1/2 -translate-y-1/2 z-0"
-      />
-      <div className="absolute top-1/2 left-1/2 w-32 h-32 border-2 border-primary/20 rounded-full -translate-x-1/2 -translate-y-1/2 border-dashed" />
-      <div className="absolute top-1/2 left-1/2 w-48 h-48 border border-primary/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 border border-primary/5 rounded-full -translate-x-1/2 -translate-y-1/2" />
-      
-      {/* Floating map pins */}
-      <motion.div
-        animate={{ y: [0, -8, 0] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-[20%] left-[25%] flex flex-col items-center gap-1"
-      >
-        <div className="w-3 h-3 bg-primary/60 rounded-full" />
-        <div className="w-16 h-1 bg-primary/20 rounded-full" />
-      </motion.div>
-
-      <motion.div
-        animate={{ y: [0, -6, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute bottom-[25%] right-[20%] flex flex-col items-center gap-1"
-      >
-        <div className="w-4 h-4 bg-primary/80 rounded-full shadow-sm" />
-        <div className="w-20 h-1.5 bg-primary/30 rounded-full" />
-      </motion.div>
-    </div>
-  )
-}
-
-function NetworkVisual() {
-  return (
-    <div className="w-full h-full relative rounded-xl border border-border/50 bg-background/50 overflow-hidden">
-      <svg className="absolute inset-0 w-full h-full text-primary/30 stroke-current drop-shadow-md" strokeWidth="3">
-        <motion.line
-          x1="25%" y1="35%" x2="75%" y2="45%"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 2.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-        />
-        <motion.line
-          x1="75%" y1="45%" x2="50%" y2="80%"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 2.5, delay: 0.8, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-        />
-        <motion.line
-          x1="50%" y1="80%" x2="25%" y2="35%"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 2.5, delay: 1.6, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-        />
-        <motion.line
-          x1="25%" y1="35%" x2="15%" y2="65%"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 2, delay: 0.4, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-          className="text-primary/10"
-        />
-        <motion.line
-          x1="75%" y1="45%" x2="85%" y2="20%"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 2, delay: 1.2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
-          className="text-primary/10"
-        />
-      </svg>
-      <motion.div
-        animate={{ scale: [1, 1.15, 1], boxShadow: ['0 0 0px rgba(var(--primary),0)', '0 0 20px rgba(var(--primary),0.3)', '0 0 0px rgba(var(--primary),0)'] }} 
-        transition={{ duration: 3, repeat: Infinity }}
-        className="absolute top-[35%] left-[25%] w-12 h-12 bg-card border-4 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
-      >
-        <div className="w-4 h-4 bg-primary/50 rounded-full" />
-      </motion.div>
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], boxShadow: ['0 0 0px rgba(var(--primary),0)', '0 0 25px rgba(var(--primary),0.4)', '0 0 0px rgba(var(--primary),0)'] }} 
-        transition={{ duration: 3, delay: 0.8, repeat: Infinity }}
-        className="absolute top-[45%] left-[75%] w-16 h-16 bg-card border-4 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
-      >
-        <div className="w-6 h-6 bg-primary/70 rounded-full" />
-      </motion.div>
-      <motion.div
-        animate={{ scale: [1, 1.1, 1], boxShadow: ['0 0 0px rgba(var(--primary),0)', '0 0 15px rgba(var(--primary),0.2)', '0 0 0px rgba(var(--primary),0)'] }} 
-        transition={{ duration: 3, delay: 1.6, repeat: Infinity }}
-        className="absolute top-[80%] left-[50%] w-10 h-10 bg-card border-4 border-primary rounded-full -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center"
-      >
-        <div className="w-3 h-3 bg-primary/40 rounded-full" />
-      </motion.div>
-      
-      {/* Minor nodes */}
-      <div className="absolute top-[65%] left-[15%] w-6 h-6 bg-background border-2 border-primary/40 rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
-      <div className="absolute top-[20%] left-[85%] w-8 h-8 bg-background border-2 border-primary/40 rounded-full -translate-x-1/2 -translate-y-1/2 z-10" />
-    </div>
-  )
-}
-
-function StorageVisual() {
-  return (
-    <div className="w-full h-full rounded-xl border border-border/50 bg-background/50 overflow-hidden flex flex-col items-center justify-center gap-4 p-8 relative">
-      <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent opacity-50" />
-      
-      {[0, 1, 2].map((i) => (
-        <motion.div
-          key={i}
-          initial={{ x: -30, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: i * 0.2, repeat: Infinity, repeatDelay: 4 }}
-          className="w-full max-w-sm h-12 border border-primary/10 bg-card rounded-lg flex items-center px-4 gap-4 shadow-sm relative overflow-hidden z-10"
-        >
-          <motion.div 
-            animate={{ left: ['-10%', '110%'] }}
-            transition={{ duration: 2, repeat: Infinity, delay: i * 0.5 + 1 }}
-            className="absolute top-0 bottom-0 w-8 bg-gradient-to-r from-transparent via-primary/20 to-transparent -skew-x-12"
-          />
-          <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" style={{ animationDelay: `${i * 0.3}s` }} />
-          <div className="w-full flex flex-col gap-2">
-            <div className="w-3/4 h-2 bg-primary/20 rounded-full" />
-            <div className="w-1/2 h-1.5 bg-muted rounded-full" />
-          </div>
-        </motion.div>
-      ))}
-    </div>
-  )
 }

@@ -1,37 +1,91 @@
 import { Metadata } from "next";
-import { blogPosts } from "@/data/blog";
+import { getAllBlogPosts, getBlogPost } from "@/lib/blog-loader";
+import { type BlogPost } from "@/lib/blog-data";
 import BlogPostClient from "./blog-post-client";
 
 export async function generateStaticParams() {
-  return blogPosts.map((post) => ({
+  const posts = await getAllBlogPosts();
+  return posts.map((post) => ({
     slug: post.slug,
   }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const post = blogPosts.find(p => p.slug === slug);
+  const post = await getBlogPost(slug);
 
   if (!post) {
     return {
-      title: "Post Not Found"
+      title: "Post Not Found - Aevon Blog",
+      description: "The requested blog post could not be found on the Aevon blog."
     };
   }
 
+  const title = post.title.en;
+  const description = post.description.en;
+  const keywords = [
+    ...(post.tags || []),
+    "writing guide",
+    "author tips",
+    "worldbuilding",
+    "character development",
+    "novel writing",
+    "fiction writing",
+    "storytelling",
+    "creative writing",
+    "aevon"
+  ];
+
   return {
-    title: post.title.en,
-    description: post.excerpt.en,
+    title: `${title} | Aevon Blog`,
+    description,
+    keywords: keywords.join(', '),
     openGraph: {
-      title: post.title.en,
-      description: post.excerpt.en,
+      title: `${title} | Aevon Blog`,
+      description,
       type: "article",
-      publishedTime: post.date,
+      publishedTime: post.publishDate,
+      modifiedTime: post.publishDate,
       url: `https://aevon.ink/blog/${slug}`,
-      authors: ["Aevon"],
+      siteName: "Aevon",
+      locale: "en_US",
+      authors: ["Aevon Team"],
+      section: "Blog",
+      tags: post.tags || [],
+      images: post.heroImage ? [
+        {
+          url: post.heroImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ] : [
+        {
+          url: "/aevon.png",
+          width: 1200,
+          height: 630,
+          alt: "Aevon - Novel Planning & Writing Platform",
+        },
+      ],
     },
     twitter: {
-      title: post.title.en,
-      description: post.excerpt.en,
+      card: "summary_large_image",
+      site: "@AevonApp",
+      creator: "@AevonApp",
+      title: `${title} | Aevon Blog`,
+      description,
+      images: post.heroImage ? [post.heroImage] : ["/aevon.png"],
+    },
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
     alternates: {
       canonical: `https://aevon.ink/blog/${slug}`,

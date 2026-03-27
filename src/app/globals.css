@@ -46,6 +46,7 @@
     color-scheme: light;
 
     --primary: #188038;
+    --primary-rgb: 24, 128, 56;
     --primary-strong: #115b27;
     --primary-container: #e6f4ea;
     --on-primary: #ffffff;
@@ -119,6 +120,7 @@
     color-scheme: dark;
 
     --primary: #34a853;
+    --primary-rgb: 52, 168, 83;
     --primary-strong: #188038;
     --primary-container: #0d3d1d;
     --on-primary: #ffffff;
@@ -307,5 +309,30 @@
 
   .elevation-3 {
     box-shadow: var(--elevation-3);
+  }
+}
+
+/* ═══════ SKETCH EFFECTS (landing page only) ═══════ */
+
+/* Underline sketch — draws on parent hover */
+.sketch-underline {
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+*:hover > .sketch-underline,
+.sketch-underline-visible {
+  stroke-dashoffset: 0;
+}
+
+/* Hide scrollbar for gallery strip */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Reduce motion — respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .sketch-underline {
+    transition: none !important;
+    stroke-dashoffset: 0 !important;
   }
 }
