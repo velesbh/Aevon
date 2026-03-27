@@ -4,7 +4,7 @@ import { docPages } from '@/data/docs';
 
 export const dynamic = "force-static";
 
-export default function sitemap(): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://aevon.ink';
 
   const staticRoutes = [
