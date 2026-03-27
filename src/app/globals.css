@@ -212,6 +212,60 @@
     letter-spacing: -0.005em;
   }
 
+  /* Form field styling */
+  input,
+  textarea,
+  select {
+    color: var(--text-primary);
+    background-color: var(--background-surface);
+    border-color: var(--border-ui);
+  }
+
+  input::placeholder,
+  textarea::placeholder,
+  select::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  /* Ensure MUI fields inherit proper colors */
+  .MuiInputBase-input,
+  .MuiOutlinedInput-input,
+  .MuiFilledInput-input,
+  .MuiTextField-root,
+  .MuiFormControl-root {
+    color: var(--text-primary) !important;
+  }
+
+  .MuiOutlinedInput-root,
+  .MuiFilledInput-root,
+  .MuiInput-root {
+    background-color: var(--background-surface) !important;
+  }
+
+  .MuiOutlinedInput-root .MuiOutlinedInput-notchedOutline,
+  .MuiFilledInput-root .MuiFilledInput-underline:before,
+  .MuiInput-root .MuiInput-underline:before {
+    border-color: var(--border-ui) !important;
+  }
+
+  .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+  .MuiFilledInput-root:hover .MuiFilledInput-underline:before,
+  .MuiInput-root:hover .MuiInput-underline:before {
+    border-color: var(--border-ui-hover) !important;
+  }
+
+  .MuiInputLabel-root {
+    color: var(--text-secondary) !important;
+  }
+
+  .MuiInputLabel-root.Mui-focused {
+    color: var(--primary) !important;
+  }
+
+  .MuiFormHelperText-root {
+    color: var(--text-tertiary) !important;
+  }
+
   ::selection {
     background: var(--state-layer-primary-strong);
     color: var(--on-primary);
